@@ -1896,6 +1896,8 @@
     grovePines.forEach(([tx, tz, ts]) => addPonderosaPine(tx, tz, ts, false));
 
     // Draping Golden Edison String Lights slung 12-13.5ft high between the Fire Pit Grove Pine Trunks (Photos #1, #11, #14!)
+    const groveWiresGroup = new THREE.Group();
+    treesGroup.add(groveWiresGroup);
     const stringSpans = [[0, 5], [5, 2], [2, 1], [1, 3], [3, 4], [4, 0]];
     const wireMat = new THREE.LineBasicMaterial({ color: 0x222222 });
     stringSpans.forEach(([i0, i1]) => {
@@ -1910,10 +1912,10 @@
         if (k > 0 && k < steps) {
           const b = new THREE.Mesh(new THREE.SphereGeometry(0.14, 7, 7), MAT.warmBulb);
           b.position.set(px, py - 0.14, pz);
-          siteGroup.add(b);
+          groveWiresGroup.add(b);
         }
       }
-      treesGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), wireMat));
+      groveWiresGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), wireMat));
     });
 
     // Woven Tan Rope Hammock slung between Pines G3 (14.5, 65.5) & G4 (3.5, 66.5) behind the Fire Pit (Photo #11 center!)
@@ -1926,7 +1928,7 @@
     const hamMesh = new THREE.Mesh(new THREE.TubeGeometry(hamCurve, 14, 0.55, 6, false), MAT.couchBeige);
     hamMesh.scale.set(1, 0.25, 1.35);
     hamMesh.position.y = 3.1;
-    treesGroup.add(hamMesh);
+    groveWiresGroup.add(hamMesh);
 
     // Full 360-Degree Dense Eastern-Cascade Forest Ring around the Cabin, Backyard, Shed & Garage (clear of driveway & patio!)
     [
@@ -3611,40 +3613,40 @@
       updateLabels3D();
     }
 
-    function updateTreeTransparency(dt) {
+    function updateTreeTransparency() {
       const cx = camera.position.x, cz = camera.position.z;
-      const tx = appMode === "planning" ? camCtrl.target.x : fpv.x;
-      const tz = appMode === "planning" ? camCtrl.target.z : fpv.z;
-      const vx = tx - cx, vz = tz - cz;
-      const vLenSq = Math.max(1, vx * vx + vz * vz);
+      const dCam = Math.max(1, Math.hypot(cx, cz - 2));
+      const ux = cx / dCam, uz = (cz - 2) / dCam; // Unit vector from house center (0, 2) toward camera POV
+
+      if (appMode === "planning") {
+        // Hide tree-strung fire pit cables whenever camera looks from the South/front so no cables float without trunks
+        groveWiresGroup.visible = uz < 0.15;
+      } else {
+        groveWiresGroup.visible = true;
+      }
 
       for (let i = 0; i < TREE_RECORDS.length; i++) {
         const rec = TREE_RECORDS[i];
-        let goalOp = 1.0;
-        if (appMode === "planning" && !testCamOverride) {
-          // Trees in front of the house (z > 13.5) OR sitting between the orbit camera and the house fade softly to 0.18!
+        let show = true;
+        if (appMode === "planning") {
+          // Never allow ANY tree between the camera POV and the house — keep only background & far-flank trees!
+          const along = rec.x * ux + (rec.z - 2) * uz;
+          const across = Math.abs(-rec.x * uz + (rec.z - 2) * ux);
+          if ((along > -2.0 && across < 44.0) || (uz > 0.15 && rec.z > 13.5 && Math.abs(rec.x) < 46.0)) {
+            show = false;
+          }
+        } else if (dCam > 24) {
+          // In Walk Inside mode when outside looking toward the house, hide any tree directly in the sightline to the house!
+          const vx = -cx, vz = 2 - cz;
+          const vLenSq = Math.max(1, vx * vx + vz * vz);
           const dx = rec.x - cx, dz = rec.z - cz;
           const proj = (dx * vx + dz * vz) / vLenSq;
-          const perpDist = Math.hypot(dx - proj * vx, dz - proj * vz);
-          const blocksCam = proj > -0.05 && proj < 1.05 && perpDist < 28.0;
-          const inFrontYard = rec.z > 13.5 && Math.abs(rec.x) < 42.0;
-          if (blocksCam || inFrontYard) goalOp = 0.18;
+          const perp = Math.hypot(dx - proj * vx, dz - proj * vz);
+          if (proj > 0.02 && proj < 0.85 && perp < 14.0) show = false;
         }
-        if (Math.abs(rec.op - goalOp) > 0.005) {
-          rec.op += (goalOp - rec.op) * Math.min(1, dt * 10);
-          const isTrans = rec.op < 0.98;
-          if (rec.trunkMat.transparent !== isTrans) {
-            rec.trunkMat.transparent = isTrans;
-            rec.trunkMat.depthWrite = !isTrans;
-            rec.trunkMat.needsUpdate = true;
-            rec.folMat.transparent = isTrans;
-            rec.folMat.depthWrite = !isTrans;
-            rec.folMat.needsUpdate = true;
-            rec.trunk.castShadow = !isTrans;
-            for (let b = 0; b < rec.boughs.length; b++) rec.boughs[b].castShadow = !isTrans;
-          }
-          rec.trunkMat.opacity = rec.op;
-          rec.folMat.opacity = rec.op;
+        if (rec.trunk.visible !== show) {
+          rec.trunk.visible = show;
+          for (let b = 0; b < rec.boughs.length; b++) rec.boughs[b].visible = show;
         }
       }
     }
