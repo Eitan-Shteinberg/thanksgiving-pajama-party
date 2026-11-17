@@ -1891,16 +1891,19 @@
     addRailing(10.0, 21.4, 20.8);
     addSideRailing(-21.4, 14.0, 20.8);
     addSideRailing(21.4, 14.0, 20.8);
-    // Warm Wooden Rocking Chairs + Log-Stump Drink Table on Front Porch (Photo #3 91ecdc7c!)
-    [-8.8, -2.4, 14.8].forEach(rx => {
+    // Warm Slatted Wooden Rocking Chairs + Log-Stump Drink Table on Front Porch (placed between windows so glass views stay crystal clear!)
+    [-9.2, -2.2, 19.4].forEach(rx => {
       const rg = new THREE.Group();
-      rg.position.set(rx, 0.70, 16.8);
-      rg.rotation.y = rx > 0 ? -0.25 : 0.22;
-      box(1.9, 0.16, 1.9, MAT.knottyPine, 0, 0.95, 0, rg, "porch");
-      box(1.9, 2.1, 0.16, MAT.knottyPine, 0, 1.95, -0.88, rg, "porch");
+      rg.position.set(rx, 0.70, 17.2);
+      rg.rotation.y = rx > 0 ? -0.28 : 0.22;
+      box(1.85, 0.14, 1.85, MAT.knottyPine, 0, 0.95, 0, rg, "porch");
+      box(1.85, 0.16, 0.14, MAT.knottyPine, 0, 2.85, -0.86, rg, "porch");
+      [-0.72, -0.36, 0, 0.36, 0.72].forEach(sx => {
+        box(0.10, 1.85, 0.10, MAT.knottyPine, sx, 1.92, -0.86, rg, "porch", false); // Open spindle back slats!
+      });
       [-0.85, 0.85].forEach(sx => {
-        box(0.16, 0.14, 2.6, MAT.knottyPine, sx, 0.10, 0.05, rg, "porch", false); // Curved rocker runners!
-        box(0.18, 0.14, 1.9, MAT.knottyPine, sx, 1.45, -0.05, rg, "porch", false);
+        box(0.16, 0.14, 2.5, MAT.knottyPine, sx, 0.10, 0.05, rg, "porch", false);
+        box(0.18, 0.14, 1.85, MAT.knottyPine, sx, 1.45, -0.05, rg, "porch", false);
       });
       siteGroup.add(rg);
     });
@@ -2361,8 +2364,8 @@
     // --- Forensic-Exact Downstairs Interior Partitions (100% Sealed Wall Corners & Inward-Swung Doors!) ---
     // 1. Kitchen | Downstairs Bath wall (X = +8.5, Z = -13.75..-2.0 — open Z=-2.0..+2.0 so Kitchen looks straight West into Living Room!)
     buildWallAxis("z", 8.5, -13.75, -2.0, [], { level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.6, thick: 0.35, mat: MAT.drywall, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
-    // 2. Entry -> Central Slate Hallway Wall (Z = +2.0, spanning ALL THE WAY from Staircase Wall X = +1.0 to +8.5 — ZERO gap beside doorway [4.4..8.2]!)
-    buildWallAxis("x", 2.0, 1.0, 8.5, [[4.4, 8.2]], { level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.6, thick: 0.35, mat: MAT.drywall, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
+    // 2. Entry -> Central Slate Hallway Wall (Z = +2.0, X = +1.0..+8.5, doorway [4.4..7.95] leaves a clean 0.55ft East pier so lintel never overhangs!)
+    buildWallAxis("x", 2.0, 1.0, 8.5, [[4.4, 7.95]], { level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.6, thick: 0.35, mat: MAT.drywall, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
     // 3. Central Slate Hallway -> Downstairs Bath Wall (Z = -2.0, X = +1.0..+8.5, open doorway [4.3..7.9], door swung INWARD North along East bath wall!)
     buildWallAxis("x", -2.0, 1.0, 8.5, [[4.3, 7.9]], { level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.6, thick: 0.35, mat: MAT.drywall, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
     addOpenPineDoor(7.82, 0.6, -2.22, 1.55, walkMainEnclosureGroup);
@@ -2417,10 +2420,10 @@
     box(0.22, 0.22, 16.6, MAT.knottyPine, -21.4, 9.42, -5.5, walkMainEnclosureGroup, null, false);
     box(0.22, 0.22, 16.6, MAT.knottyPine, -9.4, 9.42, -5.5, walkMainEnclosureGroup, null, false);
 
-    // Overhead Beams, Chandeliers, Pendants & 1st-Floor Ceiling
-    box(0.68, 0.78, 27.0, MAT.logBeam, 12.2, 9.05, 0, walkMainEnclosureGroup, null, false);
-    box(12.6, 0.72, 0.55, MAT.knottyPine, -15.5, 8.85, 2.60, walkMainEnclosureGroup, null, false); // Heavy pine beam above Barn Door (Photo #6!)
-    box(0.18, 0.62, 0.20, MAT.iron, -9.55, 8.82, 2.32, walkMainEnclosureGroup, null, false); // Black iron beam bracket on far-left!
+    // Overhead Beams (seated 100% flush into walls & ceiling — zero floating gap!), Chandeliers, Pendants & Sealed Stairwell Shaft
+    box(0.68, 0.78, 27.4, MAT.logBeam, 12.2, 9.26, 0, walkMainEnclosureGroup, null, false);
+    box(12.6, 0.90, 0.55, MAT.knottyPine, -15.5, 9.18, 2.60, walkMainEnclosureGroup, null, false); // Heavy pine beam flush to ceiling!
+    box(0.18, 0.62, 0.20, MAT.iron, -9.55, 9.05, 2.32, walkMainEnclosureGroup, null, false);
     // Detailed Beaded Empire Dining Chandelier + Warm Candle Cluster & Soft Bloom Halo (Photo efdc656b!)
     const dinChandGrp = new THREE.Group();
     dinChandGrp.position.set(15.2, 7.35, 5.8);
@@ -2479,13 +2482,17 @@
       walkMainEnclosureGroup.add(cg);
       addWarmHalo(cx, 7.80, cz, 3.2, walkMainEnclosureGroup, 0xffc078, 0.66);
     });
-    // 1st-Floor Ceiling Panels + Stairwell Interior Ceiling tucked strictly INSIDE roof & center dormer (NEVER pokes outside roof!)
-    box(22.7, 0.25, 27.4, MAT.ceilingWhite, -10.35, 9.65, 0, walkMainEnclosureGroup, null, false);
-    box(17.3, 0.25, 27.4, MAT.ceilingWhite, 13.05, 9.65, 0, walkMainEnclosureGroup, null, false);
-    box(3.4, 0.25, 16.2, MAT.ceilingWhite, 2.7, 9.65, -5.6, walkMainEnclosureGroup, null, false);
-    const stairDormerCeil = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.24, 9.2), MAT.ceilingWhite);
-    stairDormerCeil.position.set(2.5, 14.0, 8.4);
-    stairDormerCeil.rotation.x = 0.24;
+    // 1st-Floor Ceiling Panels + Fully Enclosed Stairwell Shaft (seals every gap above Y=9.65 around X=+1.0..+4.12, Z=+3.5..+13.75!)
+    box(22.8, 0.25, 27.5, MAT.ceilingWhite, -10.35, 9.65, 0, walkMainEnclosureGroup, null, false);
+    box(17.7, 0.25, 27.5, MAT.ceilingWhite, 12.97, 9.65, 0, walkMainEnclosureGroup, null, false); // Extends cleanly to X = +4.12!
+    box(3.15, 0.25, 17.3, MAT.ceilingWhite, 2.57, 9.65, -5.1, walkMainEnclosureGroup, null, false); // Extends cleanly to Z = +3.55!
+    // Vertical drywall floor-joist aprons (Y = 9.55..10.35, strictly below Y=12.5 roofline so ZERO exterior protrusion!)
+    box(0.24, 0.85, 10.3, MAT.drywall, 4.16, 10.0, 8.6, walkMainEnclosureGroup, null, false);  // East stairwell joist apron
+    box(3.30, 0.85, 0.24, MAT.drywall, 2.56, 10.0, 3.50, walkMainEnclosureGroup, null, false); // North stairwell joist apron
+    box(3.40, 2.5, 0.24, MAT.drywall, 2.60, 10.95, 13.38, walkMainEnclosureGroup, null, false); // Upper South stairwell wall tucked inside Y<=12.2 knee-wall!
+    const stairDormerCeil = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.24, 10.4), MAT.ceilingWhite);
+    stairDormerCeil.position.set(2.55, 14.3, 8.4);
+    stairDormerCeil.rotation.x = 0.22;
     walkMainEnclosureGroup.add(stairDormerCeil);
     box(10.5, 0.25, 9.2, MAT.ceilingWhite, 0.5, 17.6, 0.2, walkMainEnclosureGroup, null, false);
     box(44.0, 0.25, 7.2, MAT.woodDeck, 0, 9.5, 17.6, walkMainEnclosureGroup, null, false);
