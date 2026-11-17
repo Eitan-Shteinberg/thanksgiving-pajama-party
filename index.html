@@ -155,7 +155,7 @@
     }
     .fpv-loc-label { color: var(--cp-accent); }
     .fpv-coach {
-      position: absolute; top: 54px; left: 50%; transform: translateX(-50%); z-index: 15;
+      position: absolute; bottom: 98px; left: 50%; transform: translateX(-50%); z-index: 15;
       background: var(--cp-panel-strong); border: 1px solid var(--cp-border);
       color: var(--cp-text-muted); border-radius: 0.625rem; padding: 4px 11px;
       font-size: 11.5px; font-weight: 600; white-space: nowrap; pointer-events: none;
@@ -185,6 +185,55 @@
       cursor: pointer; user-select: none; touch-action: none;
     }
     .pad-btn:active { background: var(--cp-accent); color: var(--cp-accent-fg); }
+
+    /* Live Corner Minimap Radar & Real-Photo PiP */
+    .minimap-wrap {
+      position: absolute; top: 52px; left: 10px; z-index: 16;
+      background: var(--cp-panel-strong); border: 1px solid var(--cp-border-strong);
+      border-radius: 0.625rem; padding: 5px; box-shadow: var(--cp-shadow);
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .minimap-head {
+      display: flex; justify-content: space-between; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 700; color: var(--cp-text-muted); padding: 0 2px;
+    }
+    #minimap-canvas {
+      width: 124px; height: 92px; display: block; border-radius: 6px;
+      background: var(--cp-bg-elevated); border: 1px solid var(--cp-border); cursor: crosshair;
+    }
+
+    .pip-card {
+      position: absolute; top: 52px; right: 10px; z-index: 16; width: 146px;
+      background: var(--cp-panel-strong); border: 1px solid var(--cp-border-strong);
+      border-radius: 0.625rem; padding: 5px; box-shadow: var(--cp-shadow);
+      display: flex; flex-direction: column; gap: 4px; cursor: zoom-in;
+    }
+    .pip-head {
+      display: flex; justify-content: space-between; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 700; color: var(--cp-text);
+    }
+    .pip-head span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pip-close {
+      appearance: none; border: none; background: transparent; color: var(--cp-text-muted);
+      font-size: 11px; font-weight: 700; cursor: pointer; padding: 0 3px; line-height: 1;
+    }
+    #pip-img {
+      width: 100%; height: 84px; object-fit: cover; border-radius: 6px;
+      border: 1px solid var(--cp-border); display: block; background: var(--cp-surface-soft);
+    }
+
+    /* Tour & Kids Hunt & Sound Shield Floating Banner */
+    .game-hud-pill {
+      position: absolute; bottom: 44px; left: 50%; transform: translateX(-50%); z-index: 17;
+      background: var(--cp-panel-strong); border: 1px solid var(--cp-accent);
+      border-radius: 0.625rem; padding: 6px 11px; display: flex; align-items: center; gap: 8px;
+      font-size: 11.5px; font-weight: 700; color: var(--cp-text); box-shadow: var(--cp-shadow);
+      max-width: calc(100% - 20px); white-space: nowrap;
+    }
+    .game-hud-sub { font-weight: 600; color: var(--cp-text-muted); overflow: hidden; text-overflow: ellipsis; }
+
+    .pin-label.quiet-good { border-color: var(--cp-success); background: var(--cp-panel-strong); }
+    .pin-label.quiet-warn { border-color: var(--cp-warning); background: var(--cp-panel-strong); }
 
     #labels-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
     .pin-label {
@@ -394,7 +443,12 @@
       .hud-controls-desktop { display: none; }
       .room-focus-bar { bottom: 38px; padding: 5px 8px; gap: 5px; max-width: calc(100vw - 16px); }
       .fpv-badge { left: 8px; bottom: 8px; padding: 5px 8px; gap: 5px; max-width: calc(100vw - 152px); font-size: 11px; }
-      .fpv-coach { top: 46px; font-size: 10.5px; padding: 3px 9px; max-width: calc(100vw - 16px); overflow: hidden; text-overflow: ellipsis; }
+      .fpv-coach { bottom: 96px; top: auto; font-size: 10.5px; padding: 3px 9px; max-width: calc(100vw - 16px); overflow: hidden; text-overflow: ellipsis; }
+      .minimap-wrap { top: 48px; left: 6px; padding: 4px; }
+      #minimap-canvas { width: 96px; height: 70px; }
+      .pip-card { top: 48px; right: 6px; width: 108px; padding: 4px; }
+      #pip-img { height: 60px; }
+      .game-hud-pill { bottom: 96px; padding: 5px 8px; font-size: 10.5px; gap: 5px; max-width: calc(100vw - 14px); }
       .pin-label { font-size: 9.5px; padding: 2px 5px; border-radius: 6px; }
       .pin-label .pin-tag { font-size: 9px; padding: 0 4px; }
       .fpv-pad { grid-template-columns: repeat(3, 41px); grid-template-rows: repeat(2, 38px); gap: 4px; right: 8px; bottom: 8px; }
@@ -422,8 +476,10 @@
       </div>
 
       <div class="top-quick-actions">
+        <button class="btn" id="btn-tour" title="30-second hands-free guided 3D cabin tour">▶ Tour</button>
+        <button class="btn" id="btn-night" title="Toggle sunny day vs. cozy starry Thanksgiving night">🌙 Night</button>
         <button class="btn btn-outline-accent" id="btn-top-share" title="Copy sleeping plan &amp; shareable link">Share</button>
-        <button class="btn" id="btn-theme" title="Switch light or dark theme">◐</button>
+        <button class="btn" id="btn-theme" title="Switch light or dark UI theme">◐</button>
       </div>
     </header>
 
@@ -438,11 +494,15 @@
             <button class="btn btn-sm" data-view="outside">Yard &amp; Hot Tub</button>
             <button class="btn btn-sm" data-view="top">Top Map</button>
             <span class="dock-sep"></span>
-            <button class="btn btn-sm" id="btn-labels">Labels: On</button>
+            <button class="btn btn-sm" id="btn-sound" title="Simulate hangout &amp; game noise vs. quiet nap rooms">Nap Sound</button>
+            <button class="btn btn-sm" id="btn-hunt-plan" title="5-item Thanksgiving Pajama Treasure Hunt for the kids!">Kids Hunt</button>
             <button class="btn btn-sm" id="btn-barn-door">Game Door: Open</button>
+            <button class="btn btn-sm" id="btn-labels">Labels: On</button>
           </div>
 
           <div class="view-controls hidden" id="explore-controls">
+            <button class="btn btn-sm" id="btn-hunt-walk" title="5-item Thanksgiving Pajama Treasure Hunt!">Kids Hunt</button>
+            <span class="dock-sep"></span>
             <button class="btn btn-sm" data-spawn="front_yard" data-room-chip="porch">Fire Pit</button>
             <button class="btn btn-sm" data-spawn="patio" data-room-chip="patio">Hot Tub</button>
             <button class="btn btn-sm" data-spawn="garage" data-room-chip="garage">Ping-Pong</button>
@@ -462,6 +522,32 @@
 
         <canvas id="webgl-canvas"></canvas>
         <div id="labels-layer"></div>
+
+        <!-- LIVE CORNER MINIMAP RADAR (WALK MODE) -->
+        <div class="minimap-wrap hidden" id="minimap-wrap" title="Tap anywhere on radar to jump there">
+          <div class="minimap-head">
+            <span id="minimap-floor-lbl">1st Floor Radar</span>
+            <span>Tap</span>
+          </div>
+          <canvas id="minimap-canvas" width="248" height="184"></canvas>
+        </div>
+
+        <!-- LIVE PICTURE-IN-PICTURE REAL CABIN PHOTO (WALK MODE) -->
+        <div class="pip-card hidden" id="pip-card" title="Tap to enlarge real cabin photo">
+          <div class="pip-head">
+            <span id="pip-title">Real Photo</span>
+            <button type="button" class="pip-close" id="btn-pip-hide" title="Hide preview">✕</button>
+          </div>
+          <img id="pip-img" src="" alt="Live room reference photo" />
+        </div>
+
+        <!-- AUTO-TOUR / KIDS HUNT / NAP SOUND STATUS PILL -->
+        <div class="game-hud-pill hidden" id="game-hud-pill">
+          <span id="game-hud-main">Status</span>
+          <span class="game-hud-sub" id="game-hud-sub"></span>
+          <button type="button" class="btn btn-sm hidden" id="btn-game-hud-act">Reset</button>
+          <button type="button" class="btn btn-sm" id="btn-game-hud-close">✕</button>
+        </div>
 
         <!-- CONTEXTUAL ROOM QUICK-ACTION BAR IN PLAN MODE -->
         <div class="room-focus-bar hidden" id="room-focus-bar">
@@ -1144,6 +1230,7 @@
     sunLight.shadow.bias = -0.0004;
     scene.add(sunLight);
 
+    const interiorPointLights = [];
     const interiorLights = new THREE.Group();
     [
       [14, 8.6, 6, 0.58], [15, 8.6, -7, 0.52], [4, 8.6, 6, 0.44],
@@ -1152,13 +1239,43 @@
     ].forEach(([lx, ly, lz, intensity]) => {
       const pl = new THREE.PointLight(0xffe9cf, intensity, 28);
       pl.position.set(lx, ly, lz);
+      pl.userData.dayInt = intensity;
       interiorLights.add(pl);
+      interiorPointLights.push(pl);
     });
     scene.add(interiorLights);
 
     const fireLight = new THREE.PointLight(0xff8430, 1.35, 34);
     fireLight.position.set(8.5, 2.8, 53.5);
     scene.add(fireLight);
+
+    // Cozy Night Mode Accent Lights & Starfield Dome
+    const porchGlowLight = new THREE.PointLight(0xffcb85, 0.0, 34);
+    porchGlowLight.position.set(0, 8.6, 20.2);
+    const groveGlowLight = new THREE.PointLight(0xffc97d, 0.0, 36);
+    groveGlowLight.position.set(8.5, 11.8, 55.0);
+    const spaGlowLight = new THREE.PointLight(0x33d9f2, 0.35, 18);
+    spaGlowLight.position.set(-26.0, 3.8, -7.0);
+    const dinFireLight = new THREE.PointLight(0xff7b29, 0.85, 18);
+    dinFireLight.position.set(19.2, 2.2, 5.8);
+    const livFireLight = new THREE.PointLight(0xff7b29, 0.75, 15);
+    livFireLight.position.set(-15.6, 1.6, -11.2);
+    scene.add(porchGlowLight, groveGlowLight, spaGlowLight, dinFireLight, livFireLight);
+
+    const starPos = new Float32Array(450 * 3);
+    for (let si = 0; si < 450; si++) {
+      const th = (si * 2.39996) % (Math.PI * 2);
+      const ph = 0.08 + ((si * 0.61803) % 1) * 1.18;
+      const rr = 235 + (si % 7) * 8;
+      starPos[si * 3] = Math.sin(ph) * Math.cos(th) * rr;
+      starPos[si * 3 + 1] = Math.cos(ph) * rr + 12;
+      starPos[si * 3 + 2] = Math.sin(ph) * Math.sin(th) * rr;
+    }
+    const starGeo = new THREE.BufferGeometry();
+    starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
+    const starField = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xfff8e8, size: 1.35, sizeAttenuation: true }));
+    starField.visible = false;
+    scene.add(starField);
 
     const MAT = {
       ground: new THREE.MeshStandardMaterial({ map: TEX.grass, roughness: 0.96 }),
@@ -1509,7 +1626,21 @@
     box(7.02, 2.5, 5.4, MAT.spaCabinet, -26.0, 1.58, -7.0, siteGroup, "patio");
     box(7.15, 0.36, 7.15, MAT.spaShell, -26.0, 3.16, -7.0, siteGroup, "patio");
     box(5.7, 0.18, 5.7, MAT.couchWhite, -26.0, 3.28, -7.0, siteGroup, "patio", false);
-    box(5.3, 0.22, 5.3, MAT.water, -26.0, 3.32, -7.0, siteGroup, "patio", false);
+    const spaWaterMesh = box(5.3, 0.22, 5.3, MAT.water, -26.0, 3.32, -7.0, siteGroup, "patio", false);
+    spaWaterMesh.userData.propAction = "spa_jets";
+    // Rising Hot Tub Steam Puffs (animated in loop, extra atmospheric in Night Mode!)
+    const spaSteamGroup = new THREE.Group();
+    const steamPuffs = [];
+    const steamMat = new THREE.MeshBasicMaterial({ color: 0xeaf6fa, transparent: true, opacity: 0.24, depthWrite: false });
+    for (let sp = 0; sp < 14; sp++) {
+      const pm = new THREE.Mesh(new THREE.SphereGeometry(0.42 + (sp % 3) * 0.16, 8, 8), steamMat);
+      pm.userData.phase = sp * 0.45;
+      pm.userData.ox = -26.0 + ((sp * 1.7) % 3.8) - 1.9;
+      pm.userData.oz = -7.0 + ((sp * 2.3) % 3.8) - 1.9;
+      spaSteamGroup.add(pm);
+      steamPuffs.push(pm);
+    }
+    siteGroup.add(spaSteamGroup);
     [[-2.2, -2.2], [2.2, -2.2], [-2.2, 2.2], [2.2, 2.2]].forEach(([hx, hz]) => {
       box(0.85, 0.18, 0.55, MAT.iron, -26.0 + hx, 3.40, -7.0 + hz, siteGroup, "patio", false);
     });
@@ -1668,10 +1799,14 @@
     });
     const flameOuter = new THREE.Mesh(new THREE.ConeGeometry(1.15, 2.25, 9), new THREE.MeshBasicMaterial({ color: 0xff6a1a }));
     flameOuter.position.set(fpX, 1.35, fpZ);
+    flameOuter.userData.propAction = "camp_fire";
+    pickables.push(flameOuter);
     siteGroup.add(flameOuter);
     const flameCore = new THREE.Mesh(new THREE.ConeGeometry(0.68, 1.55, 8), new THREE.MeshBasicMaterial({ color: 0xffd24c }));
     flameCore.position.set(fpX + 0.1, 1.15, fpZ - 0.08);
     siteGroup.add(flameCore);
+    ashBed.userData.propAction = "camp_fire";
+    pickables.push(ashBed);
     // 2 Heavy Live-Edge Timber Slab Benches on Open-Frame Matte-Black Rectangular Steel Legs (#1 & #5 foreground!)
     const addTimberBench = (bx, bz, len, rotY) => {
       const bg = new THREE.Group();
@@ -2179,6 +2314,7 @@
     kBot.position.set(0, -1.60, 0); kBot.rotation.z = -0.65; barnDoorGroup.add(kBot);
     box(8.8, 0.14, 0.18, MAT.iron, -17.1, 7.18, 2.44, walkMainEnclosureGroup);
     [-17.2, -14.1].forEach(hx => box(0.14, 0.65, 0.22, MAT.iron, hx, 7.05, 2.42, walkMainEnclosureGroup, null, false));
+    barnDoorGroup.traverse(ch => { if (ch.isMesh) ch.userData.propAction = "barn_door"; });
     mainFloorGroup.add(barnDoorGroup);
 
     // --- Forensic-Exact Closed-Corner Main Peeled-Log Staircase + Sloped Drywall Soffit & Basket (Photos #2 & #3!) ---
@@ -2239,9 +2375,14 @@
       box(1.4, 1.4, 1.4, MAT.couchBeige, 17.7, 1.35, 5.8 + dz, mainFloorGroup, "dining");
       box(0.2, 1.6, 1.4, MAT.couchBeige, 18.35, 2.2, 5.8 + dz, mainFloorGroup, "dining");
     });
-    // Full-Height Stone Fireplace + Mantel + Framed Art Above (A8, A9)
-    box(1.8, 4.6, 4.6, MAT.stone, 20.6, 2.9, 5.8, mainFloorGroup, "dining");
-    box(1.2, 1.8, 2.4, MAT.iron, 19.8, 1.6, 5.8, mainFloorGroup, "dining");
+    // Full-Height Stone Fireplace + Interactive Hearth Flames + Mantel + Framed Art Above (A8, A9)
+    const dinStoneHearth = box(1.8, 4.6, 4.6, MAT.stone, 20.6, 2.9, 5.8, mainFloorGroup, "dining");
+    dinStoneHearth.userData.propAction = "din_fire";
+    const dinFirebox = box(1.2, 1.8, 2.4, MAT.iron, 19.8, 1.6, 5.8, mainFloorGroup, "dining");
+    dinFirebox.userData.propAction = "din_fire";
+    const dinFlameMesh = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.15, 8), new THREE.MeshBasicMaterial({ color: 0xff7722 }));
+    dinFlameMesh.position.set(19.45, 1.35, 5.8);
+    mainFloorGroup.add(dinFlameMesh);
     box(2.1, 0.32, 5.0, MAT.logBeam, 20.4, 4.1, 5.8, mainFloorGroup, "dining");
     box(0.15, 2.2, 2.2, MAT.couchWhite, 21.3, 6.2, 5.8, walkMainEnclosureGroup, null, false);
 
@@ -2292,11 +2433,17 @@
 
     // Forensic-Exact Sunken Rectangular Living Room (X = -21.75..-9.2, Z = -13.75..+2.8, Floor Y = 0.24 — Photos #5 & #6!)
     box(8.8, 0.05, 8.8, MAT.rug, -15.4, 0.27, -6.8, mainFloorGroup, "living", false);
-    box(4.6, 2.3, 1.5, MAT.cherryWood, -15.6, 1.4, -12.6, mainFloorGroup, "living"); // Cherry TV & Electric Fireplace on North wall!
-    box(2.0, 1.25, 0.14, MAT.iron, -15.6, 1.25, -11.82, mainFloorGroup, "living", false); // Electric fireplace glass insert!
-    box(1.6, 0.55, 0.16, new THREE.MeshBasicMaterial({ color: 0xf97316 }), -15.6, 0.98, -11.80, mainFloorGroup, "living", false); // Glowing flames!
-    box(3.8, 2.2, 0.16, MAT.iron, -15.6, 3.5, -12.8, mainFloorGroup, "living");
-    box(3.5, 1.95, 0.18, MAT.tvScreen, -15.6, 3.5, -12.76, mainFloorGroup, "living", false);
+    const livConsoleMesh = box(4.6, 2.3, 1.5, MAT.cherryWood, -15.6, 1.4, -12.6, mainFloorGroup, "living");
+    livConsoleMesh.userData.propAction = "liv_fire";
+    const livFireGlass = box(2.0, 1.25, 0.14, MAT.iron, -15.6, 1.25, -11.82, mainFloorGroup, "living", false);
+    livFireGlass.userData.propAction = "liv_fire";
+    const livFlameMesh = box(1.6, 0.55, 0.16, new THREE.MeshBasicMaterial({ color: 0xf97316 }), -15.6, 0.98, -11.80, mainFloorGroup, "living", false);
+    livFlameMesh.userData.propAction = "liv_fire";
+    const livTvFrame = box(3.8, 2.2, 0.16, MAT.iron, -15.6, 3.5, -12.8, mainFloorGroup, "living");
+    livTvFrame.userData.propAction = "liv_tv";
+    const livTvScreenMesh = box(3.5, 1.95, 0.18, MAT.tvScreen.clone(), -15.6, 3.5, -12.76, mainFloorGroup, "living", false);
+    livTvScreenMesh.userData.propAction = "liv_tv";
+    pickables.push(livTvScreenMesh);
     // Beige 3-Cushion Sofa + Buffalo-Plaid Pillows on East wall X = -10.8, Z = -12.5..-6.2 (right next to Knotty-Pine Bedroom Door, Photo #5!)
     box(2.7, 1.35, 6.4, MAT.couchBeige, -10.8, 0.92, -9.4, mainFloorGroup, "living");
     box(0.6, 1.5, 6.4, MAT.couchBeige, -9.8, 1.82, -9.4, mainFloorGroup, "living");
@@ -2766,6 +2913,7 @@
           const match = b.dataset.roomChip === rId || (b.dataset.roomChip === "dining" && rId === "kitchen");
           b.classList.toggle("active", match);
         });
+        if (typeof syncWalkOverlays === "function") syncWalkOverlays();
       }
     }
 
@@ -2874,14 +3022,27 @@
         lastPinchDist = 0;
         const moved = Math.hypot(e.clientX - camCtrl.downX, e.clientY - camCtrl.downY);
         if (wasSingle && moved < 8 && (e.button === 0 || e.pointerType === "touch")) {
+          if (autoTour.active) stopAutoTour();
           if (appMode === "planning") {
             handleCanvasClick(e);
           } else {
-            // In Walk Mode, tapping/clicking on ANY visible floor or outdoor ground glides smoothly toward it!
+            // In Walk Mode, check interactive props & hunt items FIRST, otherwise glide smoothly toward the tapped floor/ground spot!
             const rect = canvas.getBoundingClientRect();
             mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
             mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
+            const propHits = raycaster.intersectObjects([...huntPickables, ...pickables], false);
+            if (propHits.length > 0 && propHits[0].distance < 28) {
+              const hitObj = propHits[0].object;
+              if (hitObj.userData.huntId && huntMode) {
+                collectHuntItem(hitObj.userData.huntId);
+                return;
+              }
+              if (hitObj.userData.propAction && propHits[0].distance < 18) {
+                triggerPropAction(hitObj.userData.propAction);
+                return;
+              }
+            }
             const hits = raycaster.intersectObjects([forestBase, ...pickables], false);
             if (hits.length > 0 && hits[0].point.y < fpv.y + 3.2 && hits[0].point.y > fpv.y - 3.2) {
               dismissFPVCoach();
@@ -2909,18 +3070,29 @@
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(mouse, camera);
-      const activeObjects = pickables.filter(m => {
+      const activeObjects = [...huntPickables, ...pickables].filter(m => {
         let p = m;
         while (p) { if (!p.visible) return false; p = p.parent; }
         return true;
       });
       const hits = raycaster.intersectObjects(activeObjects, false);
-      if (hits.length > 0 && hits[0].object.userData.roomId) {
-        selectRoom(hits[0].object.userData.roomId, false, true);
-      } else {
-        selectedRoomId = null;
-        updateFocusBar();
+      if (hits.length > 0) {
+        const obj = hits[0].object;
+        if (obj.userData.huntId && huntMode) {
+          collectHuntItem(obj.userData.huntId);
+          return;
+        }
+        if (obj.userData.propAction) {
+          triggerPropAction(obj.userData.propAction);
+          return;
+        }
+        if (obj.userData.roomId) {
+          selectRoom(obj.userData.roomId, false, true);
+          return;
+        }
       }
+      selectedRoomId = null;
+      updateFocusBar();
     }
 
     // ==================== 7. DUAL MODES & VIEW SWITCHING ====================
@@ -3039,8 +3211,11 @@
         else if (document.querySelector(".tab-btn.active")?.dataset.tab === "planner") switchTab("inspector");
         fpv.currentRoom = "";
         detectFPVRoom();
+        if (typeof syncWalkOverlays === "function") syncWalkOverlays();
+        if (typeof updateGameHud === "function") updateGameHud();
         viewport.focus({ preventScroll: true });
       } else {
+        if (typeof autoTour !== "undefined" && autoTour.active) stopAutoTour();
         walkTargetRing.visible = false;
         fpvWalkGoal = null;
         coachEl.classList.add("hidden");
@@ -3054,6 +3229,8 @@
         if (window.innerWidth > 820 || !workspaceEl.classList.contains("sheet-collapsed")) switchTab("planner");
         setViewMode(currentView, false);
         updateFocusBar();
+        if (typeof syncWalkOverlays === "function") syncWalkOverlays();
+        if (typeof updateGameHud === "function") updateGameHud();
       }
     }
 
@@ -3101,6 +3278,7 @@
       barnDoorOpen = open;
       barnGoalX = barnDoorOpen ? -15.65 : -19.6;
       document.getElementById("btn-barn-door").textContent = barnDoorOpen ? "Game Door: Open" : "Game Door: Closed";
+      if (typeof updateSoundLabels === "function") updateSoundLabels();
     }
     document.getElementById("btn-barn-door").addEventListener("click", () => setBarnDoor(!barnDoorOpen));
 
@@ -3502,11 +3680,465 @@
     document.getElementById("btn-copy-plan").addEventListener("click", copyShareLink);
     document.getElementById("btn-top-share").addEventListener("click", copyShareLink);
 
+    // ==================== 7B. NEXT-LEVEL GAME & UX FEATURES (NIGHT MODE, INTERACTIVE PROPS, KIDS HUNT, NAP SOUND, MINIMAP, PIP & AUTO-TOUR) ====================
+    let nightMode = false;
+    let campFireOn = true, dinFireOn = true, livFireOn = true, spaJetsOn = true, livTvChannel = 0;
+    let soundSimMode = false;
+    let huntMode = false;
+    let pipHiddenByUser = false;
+
+    const TV_CHANNELS = [
+      { color: 0x2d6a8e, name: "Lake Cle Elum View" },
+      { color: 0xe86c1f, name: "Thanksgiving Yule Log" },
+      { color: 0x161616, name: "Off" }
+    ];
+
+    function playChime(freqs = [523.25, 659.25, 783.99]) {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = playChime._ctx || (playChime._ctx = new Ctx());
+        if (ctx.state === "suspended") ctx.resume();
+        freqs.forEach((f, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "triangle";
+          osc.frequency.value = f;
+          const t0 = ctx.currentTime + idx * 0.085;
+          gain.gain.setValueAtTime(0.001, t0);
+          gain.gain.exponentialRampToValueAtTime(0.08, t0 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.28);
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.start(t0); osc.stop(t0 + 0.30);
+        });
+      } catch (_) {}
+    }
+
+    function triggerPropAction(action) {
+      if (action === "barn_door") {
+        setBarnDoor(!barnDoorOpen);
+        updateSoundLabels();
+        showToast(barnDoorOpen ? "Slid Game Room barn door open" : "Closed Game Room barn door (blocks foosball noise!)");
+      } else if (action === "camp_fire") {
+        campFireOn = !campFireOn;
+        flameOuter.visible = flameCore.visible = campFireOn;
+        fireLight.visible = campFireOn;
+        showToast(campFireOn ? "Lit outdoor stone fire pit!" : "Extinguished outdoor fire pit");
+      } else if (action === "din_fire") {
+        dinFireOn = !dinFireOn;
+        dinFlameMesh.visible = dinFireLight.visible = dinFireOn;
+        showToast(dinFireOn ? "Lit Dining river-rock fireplace!" : "Turned off Dining fireplace");
+      } else if (action === "liv_fire") {
+        livFireOn = !livFireOn;
+        livFlameMesh.visible = livFireLight.visible = livFireOn;
+        showToast(livFireOn ? "Turned on Living Room fireplace glow!" : "Turned off Living Room fireplace");
+      } else if (action === "liv_tv") {
+        livTvChannel = (livTvChannel + 1) % TV_CHANNELS.length;
+        livTvScreenMesh.material.color.setHex(TV_CHANNELS[livTvChannel].color);
+        showToast(`Living Room TV: ${TV_CHANNELS[livTvChannel].name}`);
+      } else if (action === "spa_jets") {
+        spaJetsOn = !spaJetsOn;
+        spaSteamGroup.visible = spaJetsOn;
+        spaGlowLight.visible = spaJetsOn;
+        showToast(spaJetsOn ? "Hot tub jets & warm steam ON!" : "Hot tub jets paused");
+      }
+      playChime([440, 554.37]);
+    }
+
+    // --- 1. KIDS' 5-ITEM THANKSGIVING PAJAMA HUNT ---
+    const huntPickables = [];
+    const HUNT_ITEMS = [
+      { id: "turkey",  name: "Roast Turkey",       clue: "Check the Kitchen granite island!",           level: 1, pos: [16.8, 4.15, -1.0],  found: false, color: 0xd97724 },
+      { id: "bear",    name: "Galileo & Ada Bear", clue: "Peek at the Upstairs Built-In Twin Nook!",    level: 2, pos: [-10.8, 2.05, 6.6],  found: false, color: 0xb57445 },
+      { id: "star",    name: "Maya's Gold Star",   clue: "Look between the 2 Queen Beds upstairs!",     level: 2, pos: [18.8, 3.35, -1.7],  found: false, color: 0xfacc15 },
+      { id: "cup",     name: "Foosball Trophy",    clue: "Check the Foosball Table downstairs!",        level: 1, pos: [-17.0, 3.45, 8.2],  found: false, color: 0xf59e0b },
+      { id: "paddle",  name: "Ping-Pong Paddle",   clue: "Head out to the Ping-Pong Garage!",           level: 0, pos: [-42.5, 3.55, 25.5], found: false, color: 0xe11d48 }
+    ];
+    const huntNodes = [];
+
+    HUNT_ITEMS.forEach(item => {
+      const grp = new THREE.Group();
+      grp.visible = false;
+      const mat = new THREE.MeshStandardMaterial({ color: item.color, emissive: item.color, emissiveIntensity: 0.38, roughness: 0.35 });
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0xfde047, side: THREE.DoubleSide, transparent: true, opacity: 0.78 });
+      const halo = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.78, 20), ringMat);
+      halo.rotation.x = -Math.PI / 2; halo.position.y = -0.28; grp.add(halo);
+
+      let mainMesh;
+      if (item.id === "turkey") {
+        const platter = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.65, 0.10, 16), MAT.stainless);
+        platter.position.y = -0.22; grp.add(platter);
+        mainMesh = new THREE.Mesh(new THREE.SphereGeometry(0.52, 14, 12), mat);
+        mainMesh.scale.set(1.25, 0.88, 0.95);
+      } else if (item.id === "bear") {
+        mainMesh = new THREE.Mesh(new THREE.SphereGeometry(0.46, 12, 12), mat);
+        [-0.32, 0.32].forEach(ex => {
+          const ear = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 10), mat);
+          ear.position.set(ex, 0.38, 0); grp.add(ear);
+        });
+      } else if (item.id === "star") {
+        mainMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.52, 0), mat);
+      } else if (item.id === "cup") {
+        mainMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.20, 0.72, 12), mat);
+      } else {
+        mainMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.12, 16), mat);
+        mainMesh.rotation.z = Math.PI / 2;
+      }
+      grp.add(mainMesh);
+      grp.traverse(ch => {
+        if (ch.isMesh) {
+          ch.userData.huntId = item.id;
+          huntPickables.push(ch);
+        }
+      });
+
+      const parent = item.level === 2 ? upperFloorGroup : (item.level === 1 ? mainFloorGroup : siteGroup);
+      grp.position.set(item.pos[0], item.pos[1], item.pos[2]);
+      parent.add(grp);
+      item.group = grp;
+
+      const lbl = document.createElement("div");
+      lbl.className = "pin-label selected";
+      lbl.style.display = "none";
+      lbl.textContent = `★ ${item.name}`;
+      lbl.addEventListener("click", () => collectHuntItem(item.id));
+      document.getElementById("labels-layer").appendChild(lbl);
+      huntNodes.push({ item, el: lbl });
+    });
+
+    const gameHudPill = document.getElementById("game-hud-pill");
+    const gameHudMain = document.getElementById("game-hud-main");
+    const gameHudSub = document.getElementById("game-hud-sub");
+    const gameHudAct = document.getElementById("btn-game-hud-act");
+
+    function updateGameHud() {
+      if (autoTour.active) {
+        const wp = TOUR_WAYPOINTS[autoTour.segIdx] || TOUR_WAYPOINTS[0];
+        gameHudMain.textContent = `Tour (${autoTour.segIdx + 1}/${TOUR_WAYPOINTS.length}):`;
+        gameHudSub.textContent = wp.title;
+        gameHudAct.classList.add("hidden");
+        gameHudPill.classList.remove("hidden");
+      } else if (huntMode) {
+        const foundCount = HUNT_ITEMS.filter(x => x.found).length;
+        const nextItem = HUNT_ITEMS.find(x => !x.found);
+        gameHudMain.textContent = `Kids Hunt: ${foundCount}/5`;
+        gameHudSub.textContent = nextItem ? nextItem.clue : "All 5 Pajama Party Treasures Found!";
+        gameHudAct.textContent = "Reset";
+        gameHudAct.classList.toggle("hidden", foundCount === 0);
+        gameHudPill.classList.remove("hidden");
+      } else if (soundSimMode && appMode === "planning") {
+        gameHudMain.textContent = "Nap Sound Shield:";
+        gameHudSub.textContent = barnDoorOpen
+          ? "Barn Door OPEN — tap 'Game Door' to block Foosball noise!"
+          : "Barn Door CLOSED — all 3 bedrooms shielded for naps!";
+        gameHudAct.textContent = barnDoorOpen ? "Close Door" : "Open Door";
+        gameHudAct.classList.remove("hidden");
+        gameHudPill.classList.remove("hidden");
+      } else {
+        gameHudPill.classList.add("hidden");
+      }
+    }
+
+    function setHuntMode(on) {
+      huntMode = on;
+      if (on && soundSimMode) setSoundSimMode(false);
+      document.getElementById("btn-hunt-plan").classList.toggle("active", on);
+      document.getElementById("btn-hunt-walk").classList.toggle("active", on);
+      HUNT_ITEMS.forEach(it => { it.group.visible = on && !it.found; });
+      updateGameHud();
+      if (on) showToast("Kids Pajama Hunt ON! Tap or walk up to all 5 glowing treasures!");
+    }
+
+    function collectHuntItem(id) {
+      const it = HUNT_ITEMS.find(x => x.id === id);
+      if (!it || it.found) return;
+      it.found = true;
+      it.group.visible = false;
+      const foundCount = HUNT_ITEMS.filter(x => x.found).length;
+      if (foundCount === HUNT_ITEMS.length) {
+        playChime([523.25, 659.25, 783.99, 1046.5]);
+        showToast("Hooray! Galileo, Maya & Ada found all 5 Thanksgiving treasures!");
+      } else {
+        playChime([587.33, 783.99, 987.77]);
+        showToast(`Found ${it.name}! (${foundCount}/5)`);
+      }
+      updateGameHud();
+    }
+
+    function resetHunt() {
+      HUNT_ITEMS.forEach(it => { it.found = false; it.group.visible = huntMode; });
+      updateGameHud();
+    }
+
+    document.getElementById("btn-hunt-plan").addEventListener("click", () => setHuntMode(!huntMode));
+    document.getElementById("btn-hunt-walk").addEventListener("click", () => setHuntMode(!huntMode));
+
+    // --- 2. NAP & NOISE SHIELD ACOUSTIC SIMULATOR ---
+    const soundSimGroup = new THREE.Group();
+    soundSimGroup.visible = false;
+    scene.add(soundSimGroup);
+    const SOUND_SOURCES = [
+      { id: "foos", x: -17.0, y: 1.2, z: 8.2,  baseR: 14.5, closedR: 5.4, color: 0xf59e0b },
+      { id: "din",  x: 15.2,  y: 1.2, z: 2.5,  baseR: 11.5, closedR: 11.5, color: 0xe87948 },
+      { id: "spa",  x: -26.0, y: 1.2, z: -7.0, baseR: 8.5,  closedR: 8.5,  color: 0x38bdf8 },
+      { id: "gar",  x: -42.5, y: 1.0, z: 25.5, baseR: 10.0, closedR: 10.0, color: 0x4ade80 }
+    ];
+    const soundRings = [];
+    SOUND_SOURCES.forEach(src => {
+      for (let k = 0; k < 3; k++) {
+        const mat = new THREE.MeshBasicMaterial({ color: src.color, side: THREE.DoubleSide, transparent: true, opacity: 0.45, depthWrite: false });
+        const ring = new THREE.Mesh(new THREE.RingGeometry(0.86, 1.0, 32), mat);
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.set(src.x, src.y, src.z);
+        soundSimGroup.add(ring);
+        soundRings.push({ ring, mat, src, phase: k / 3 });
+      }
+    });
+
+    const soundStatusBadges = [
+      { room: "up_west",  level: 2, pos: [-13.2, 4.8, 0.0] },
+      { room: "up_east",  level: 2, pos: [13.2, 4.8, 0.0] },
+      { room: "down_bed", level: 1, pos: [-4.0, 4.6, -8.5] }
+    ].map(cfg => {
+      const el = document.createElement("div");
+      el.className = "pin-label quiet-good";
+      el.style.display = "none";
+      document.getElementById("labels-layer").appendChild(el);
+      return { ...cfg, el };
+    });
+
+    function updateSoundLabels() {
+      soundStatusBadges.forEach(b => {
+        if (b.room === "down_bed") {
+          b.el.className = barnDoorOpen ? "pin-label quiet-warn" : "pin-label quiet-good";
+          b.el.textContent = barnDoorOpen ? "1st-Flr Nap: Moderate (Close Barn Door)" : "1st-Flr Nap: Quiet Shielded";
+        } else if (b.room === "up_west") {
+          b.el.className = "pin-label quiet-good";
+          b.el.textContent = "Upstairs West: Very Quiet for Kids";
+        } else {
+          b.el.className = "pin-label quiet-good";
+          b.el.textContent = "Upstairs 2-Queen: Very Quiet (Isolated)";
+        }
+      });
+      if (soundSimMode) updateGameHud();
+    }
+    updateSoundLabels();
+
+    function setSoundSimMode(on) {
+      soundSimMode = on;
+      if (on && huntMode) setHuntMode(false);
+      if (on && appMode !== "planning") setAppMode("planning");
+      soundSimGroup.visible = on;
+      document.getElementById("btn-sound").classList.toggle("active", on);
+      updateSoundLabels();
+      updateGameHud();
+    }
+    document.getElementById("btn-sound").addEventListener("click", () => setSoundSimMode(!soundSimMode));
+
+    gameHudAct.addEventListener("click", () => {
+      if (huntMode) resetHunt();
+      else if (soundSimMode) { setBarnDoor(!barnDoorOpen); updateSoundLabels(); }
+    });
+    document.getElementById("btn-game-hud-close").addEventListener("click", () => {
+      if (autoTour.active) stopAutoTour();
+      else if (huntMode) setHuntMode(false);
+      else if (soundSimMode) setSoundSimMode(false);
+    });
+
+    // --- 3. COZY STARRY THANKSGIVING NIGHT MODE ---
     function syncSceneTheme() {
       const tc = getThemeColors();
-      scene.background = new THREE.Color(tc.bg);
-      scene.fog = new THREE.Fog(tc.bg, 130, 260);
+      if (nightMode) {
+        scene.background = new THREE.Color(0x0b121c);
+        scene.fog = new THREE.FogExp2(0x0b121c, 0.0026);
+        hemiLight.color.setHex(0x3a4f70);
+        hemiLight.groundColor.setHex(0x1b1510);
+        hemiLight.intensity = 0.36;
+        sunLight.color.setHex(0x7ca2cf);
+        sunLight.intensity = 0.24;
+        starField.visible = true;
+        porchGlowLight.intensity = 1.05;
+        groveGlowLight.intensity = 1.10;
+        spaGlowLight.intensity = spaJetsOn ? 0.95 : 0.0;
+        interiorPointLights.forEach(pl => { pl.intensity = pl.userData.dayInt * 1.68; pl.color.setHex(0xffcf94); });
+        steamMat.opacity = 0.38;
+      } else {
+        scene.background = new THREE.Color(tc.bg);
+        scene.fog = new THREE.Fog(tc.bg, 130, 260);
+        hemiLight.color.setHex(0xfff8ed);
+        hemiLight.groundColor.setHex(0x5d5343);
+        hemiLight.intensity = 0.84;
+        sunLight.color.setHex(0xfff1d8);
+        sunLight.intensity = 0.92;
+        starField.visible = false;
+        porchGlowLight.intensity = 0.0;
+        groveGlowLight.intensity = 0.0;
+        spaGlowLight.intensity = spaJetsOn ? 0.25 : 0.0;
+        interiorPointLights.forEach(pl => { pl.intensity = pl.userData.dayInt; pl.color.setHex(0xffe9cf); });
+        steamMat.opacity = 0.22;
+      }
     }
+
+    document.getElementById("btn-night").addEventListener("click", e => {
+      nightMode = !nightMode;
+      e.currentTarget.classList.toggle("active", nightMode);
+      e.currentTarget.textContent = nightMode ? "☀️ Day" : "🌙 Night";
+      syncSceneTheme();
+      showToast(nightMode ? "Cozy Thanksgiving Night Mode ON! (Tap fireplaces, TV & hot tub!)" : "Sunny Cascade Day Mode");
+    });
+
+    // --- 4. LIVE CORNER MINIMAP RADAR & REAL-PHOTO PIP ---
+    const minimapWrap = document.getElementById("minimap-wrap");
+    const minimapCanvas = document.getElementById("minimap-canvas");
+    const mctx = minimapCanvas.getContext("2d");
+    const pipCard = document.getElementById("pip-card");
+    const pipImg = document.getElementById("pip-img");
+    const pipTitle = document.getElementById("pip-title");
+
+    document.getElementById("btn-pip-hide").addEventListener("click", e => {
+      e.stopPropagation();
+      pipHiddenByUser = true;
+      pipCard.classList.add("hidden");
+    });
+    pipCard.addEventListener("click", () => openLightbox(fpv.currentRoom || "porch", 0));
+
+    function syncWalkOverlays() {
+      const isWalk = appMode === "explore";
+      minimapWrap.classList.toggle("hidden", !isWalk);
+      pipCard.classList.toggle("hidden", !isWalk || pipHiddenByUser);
+      if (isWalk) {
+        const r = ROOMS[fpv.currentRoom] || ROOMS.porch;
+        if (r && r.photos && r.photos.length) {
+          const src = pThumb(r.photos[0]);
+          if (pipImg.dataset.cur !== src) {
+            pipImg.dataset.cur = src;
+            pipImg.src = src;
+          }
+          pipTitle.textContent = r.name;
+        }
+      }
+    }
+
+    // Minimap maps world X=[-56..+36], Z=[-18..+62] in Floor 1/Yard, or X=[-24..+24], Z=[-15..+15] on Floor 2!
+    function getMinimapBounds() {
+      return fpv.floor === 2
+        ? { x0: -23, x1: 23, z0: -14, z1: 14, label: "2nd Floor Radar" }
+        : { x0: -54, x1: 30, z0: -16, z1: 60, label: "1st Flr & Yard" };
+    }
+
+    minimapCanvas.addEventListener("pointerdown", e => {
+      e.stopPropagation();
+      if (autoTour.active) stopAutoTour();
+      const rect = minimapCanvas.getBoundingClientRect();
+      const u = (e.clientX - rect.left) / rect.width;
+      const v = (e.clientY - rect.top) / rect.height;
+      const b = getMinimapBounds();
+      const wx = b.x0 + u * (b.x1 - b.x0);
+      const wz = b.z0 + v * (b.z1 - b.z0);
+      fpvWalkGoal = null;
+      [fpv.x, fpv.z] = resolveFPVCollisions(wx, wz, fpv.floor);
+      updateFPVPhysics(0.05);
+      fpv.y = fpv.goalY;
+    });
+
+    function drawMinimap() {
+      if (appMode !== "explore") return;
+      const w = minimapCanvas.width, h = minimapCanvas.height;
+      const b = getMinimapBounds();
+      const lbl = document.getElementById("minimap-floor-lbl");
+      if (lbl.textContent !== b.label) lbl.textContent = b.label;
+      const tc = getThemeColors();
+
+      const mx = wx => ((wx - b.x0) / (b.x1 - b.x0)) * w;
+      const mz = wz => ((wz - b.z0) / (b.z1 - b.z0)) * h;
+
+      mctx.clearRect(0, 0, w, h);
+      mctx.fillStyle = tc.isDark ? "#232221" : "#f2eee7";
+      mctx.fillRect(0, 0, w, h);
+
+      const drawRect = (x0, z0, x1, z1, fill, stroke) => {
+        const rx = mx(x0), rz = mz(z0), rw = mx(x1) - rx, rh = mz(z1) - rz;
+        if (fill) { mctx.fillStyle = fill; mctx.fillRect(rx, rz, rw, rh); }
+        if (stroke) { mctx.strokeStyle = stroke; mctx.lineWidth = 1.6; mctx.strokeRect(rx, rz, rw, rh); }
+      };
+
+      const wallCol = tc.isDark ? "#9e9890" : "#5a534b";
+      const roomFill = tc.isDark ? "#33312f" : "#ffffff";
+
+      if (fpv.floor === 1) {
+        drawRect(-38.2, -13.7, -21.8, 13.7, tc.isDark ? "#3b3a38" : "#ded9d0", null); // West Patio
+        drawRect(-50.5, 15.0, -34.5, 36.0, tc.isDark ? "#383530" : "#e5dfd4", wallCol); // Garage
+        drawRect(-21.8, 13.8, 21.8, 20.8, tc.isDark ? "#453a2e" : "#eadbc8", null);    // Porch
+        // Fire Pit circle
+        mctx.fillStyle = "#f97316";
+        mctx.beginPath(); mctx.arc(mx(8.5), mz(53.5), 5, 0, Math.PI * 2); mctx.fill();
+        // Cabin 1st floor rooms
+        drawRect(-21.75, -13.75, 21.75, 13.75, roomFill, wallCol);
+        drawRect(-21.75, 2.8, -11.8, 13.75, null, wallCol);  // Foosball
+        drawRect(-9.2, -13.75, 1.0, -2.0, null, wallCol);    // Down Bed
+        drawRect(1.0, -13.75, 8.5, -2.0, null, wallCol);     // Down Bath
+        drawRect(1.0, 2.0, 4.1, 13.75, tc.isDark ? "#524232" : "#dcc3a5", wallCol); // Stairs
+      } else {
+        drawRect(-20.6, -11.8, 20.6, 11.8, roomFill, wallCol);
+        drawRect(-20.6, -11.8, -5.5, 11.8, null, wallCol);   // Up West
+        drawRect(5.5, -11.8, 20.6, 11.8, null, wallCol);     // Up East
+        drawRect(-4.5, -11.8, 5.5, -2.5, null, wallCol);     // Up Bath
+        drawRect(-10.3, -11.8, -5.5, -5.5, null, wallCol);   // Closet
+        drawRect(1.0, 3.5, 4.1, 11.8, tc.isDark ? "#524232" : "#dcc3a5", wallCol); // Stairs
+      }
+
+      // Live Player Viewing Cone + Position Dot
+      const px = mx(fpv.x), pz = mz(fpv.z);
+      const dirAng = Math.atan2(-Math.cos(fpv.yaw), -Math.sin(fpv.yaw));
+      mctx.fillStyle = tc.isDark ? "rgba(253,142,161,0.28)" : "rgba(177,31,75,0.22)";
+      mctx.beginPath();
+      mctx.moveTo(px, pz);
+      mctx.arc(px, pz, 26, dirAng - 0.55, dirAng + 0.55);
+      mctx.closePath();
+      mctx.fill();
+
+      mctx.fillStyle = tc.accent;
+      mctx.beginPath(); mctx.arc(px, pz, 4.6, 0, Math.PI * 2); mctx.fill();
+      mctx.strokeStyle = "#ffffff"; mctx.lineWidth = 1.6; mctx.stroke();
+    }
+
+    // --- 5. 30-SECOND GUIDED CINEMATIC AUTO-TOUR ---
+    const TOUR_WAYPOINTS = [
+      { title: "Pine-Grove Stone Fire Pit",          pos: [10.0, 5.4, 62.5], look: [4.0, 6.2, 18.0],  dur: 3.6 },
+      { title: "Covered Log Front Porch & Entry",    pos: [6.5,  5.6, 20.5], look: [6.5, 5.2, 4.0],   dur: 3.2 },
+      { title: "Dining Stone Fireplace & Kitchen",   pos: [11.2, 5.6, 9.5],  look: [17.5, 4.6, -5.0], dur: 3.6 },
+      { title: "Central Hallway & 2 Carpeted Steps", pos: [3.5,  5.6, 0.0],  look: [-15.5, 4.4, -3.5],dur: 3.2 },
+      { title: "Sunken Living Room & Barn Door",     pos: [-14.5,5.2, -5.5], look: [-16.8, 4.2, 7.5], dur: 3.5 },
+      { title: "Climbing the Peeled-Log Staircase",  pos: [2.55, 8.8, 8.2],  look: [1.5, 13.5, 0.5],  dur: 3.4 },
+      { title: "Upstairs West Suite (King + 2 Kid Beds)", pos: [-7.5, 14.8, 1.2], look: [-14.5, 12.8, -5.5], dur: 3.8 },
+      { title: "Upstairs 2-Queen Family Suite",      pos: [7.5,  14.8, 1.2], look: [16.8, 12.8, -1.8], dur: 3.8 },
+      { title: "West Patio Hot Tub & Ping-Pong Cabin", pos: [-35.5, 6.2, 9.5], look: [-25.5, 4.0, -6.5], dur: 3.6 }
+    ];
+    const autoTour = { active: false, segIdx: 0, segT: 0 };
+
+    function startAutoTour() {
+      if (appMode !== "explore") setAppMode("explore");
+      dismissFPVCoach();
+      autoTour.active = true;
+      autoTour.segIdx = 0;
+      autoTour.segT = 0;
+      document.getElementById("btn-tour").classList.add("active");
+      document.getElementById("btn-tour").textContent = "⏹ Stop";
+      updateGameHud();
+    }
+
+    function stopAutoTour() {
+      if (!autoTour.active) return;
+      autoTour.active = false;
+      document.getElementById("btn-tour").classList.remove("active");
+      document.getElementById("btn-tour").textContent = "▶ Tour";
+      updateGameHud();
+    }
+
+    document.getElementById("btn-tour").addEventListener("click", () => {
+      if (autoTour.active) stopAutoTour();
+      else startAutoTour();
+    });
 
     function resize() {
       const w = Math.max(1, viewport.clientWidth);
@@ -3537,11 +4169,56 @@
       t += dt * 2.4;
 
       barnDoorGroup.position.x += (barnGoalX - barnDoorGroup.position.x) * (1 - Math.exp(-9 * dt));
-      if (flameOuter) flameOuter.scale.y = 0.92 + Math.sin(t * 3.1) * 0.12;
-      if (flameCore) flameCore.scale.y = 0.90 + Math.cos(t * 4.3) * 0.15;
-      fireLight.intensity = 1.15 + Math.sin(t * 4.2) * 0.18;
+      if (flameOuter && campFireOn) flameOuter.scale.y = 0.92 + Math.sin(t * 3.1) * 0.12;
+      if (flameCore && campFireOn) flameCore.scale.y = 0.90 + Math.cos(t * 4.3) * 0.15;
+      if (dinFlameMesh && dinFireOn) dinFlameMesh.scale.y = 0.88 + Math.sin(t * 3.7) * 0.14;
+      fireLight.intensity = campFireOn ? ((nightMode ? 1.85 : 1.15) + Math.sin(t * 4.2) * 0.22) : 0;
+      dinFireLight.intensity = dinFireOn ? ((nightMode ? 1.15 : 0.75) + Math.cos(t * 3.8) * 0.14) : 0;
+      livFireLight.intensity = livFireOn ? ((nightMode ? 0.95 : 0.62) + Math.sin(t * 3.3) * 0.10) : 0;
 
-      if (appMode === "explore" && fpvWalkGoal) {
+      // Rising Hot Tub Steam Puffs
+      if (spaJetsOn) {
+        for (let sp = 0; sp < steamPuffs.length; sp++) {
+          const pm = steamPuffs[sp];
+          const cyc = ((t * 0.32 + pm.userData.phase) % 1);
+          pm.position.set(
+            pm.userData.ox + Math.sin(t * 0.9 + sp) * 0.28,
+            3.55 + cyc * 3.2,
+            pm.userData.oz + Math.cos(t * 0.8 + sp) * 0.28
+          );
+          const sc = 0.55 + cyc * 1.15;
+          pm.scale.set(sc, sc * 0.75, sc);
+        }
+      }
+
+      // Kids Pajama Hunt Bobbing & Auto-Pickup When Walking Near!
+      if (huntMode) {
+        HUNT_ITEMS.forEach((it, idx) => {
+          if (it.found) return;
+          it.group.rotation.y = t * 0.9 + idx;
+          it.group.position.y = it.pos[1] + Math.sin(t * 1.6 + idx) * 0.14;
+          if (appMode === "explore") {
+            const worldY = it.level === 2 ? it.pos[1] + 9.8 : it.pos[1];
+            if (Math.abs((fpv.y + 2.5) - worldY) < 4.8 && Math.hypot(fpv.x - it.pos[0], fpv.z - it.pos[2]) < 4.8) {
+              collectHuntItem(it.id);
+            }
+          }
+        });
+      }
+
+      // Nap Sound Shield Expanding 3D Ripple Waves
+      if (soundSimMode) {
+        for (let sr = 0; sr < soundRings.length; sr++) {
+          const rObj = soundRings[sr];
+          const maxR = (rObj.src.id === "foos" && !barnDoorOpen) ? rObj.src.closedR : rObj.src.baseR;
+          const cyc = (t * 0.24 + rObj.phase) % 1;
+          const curR = Math.max(0.6, cyc * maxR);
+          rObj.ring.scale.set(curR, curR, 1);
+          rObj.mat.opacity = (1 - cyc) * 0.52;
+        }
+      }
+
+      if (appMode === "explore" && fpvWalkGoal && !autoTour.active) {
         walkTargetRing.visible = true;
         walkTargetRing.position.set(fpvWalkGoal.x, (fpvWalkGoal.y || fpv.y) + 0.08, fpvWalkGoal.z);
         const pulse = 0.85 + Math.sin(t * 4.0) * 0.15;
@@ -3553,6 +4230,49 @@
       if (testCamOverride) {
         camera.position.set(testCamOverride.x, testCamOverride.y, testCamOverride.z);
         camera.lookAt(testCamOverride.lx, testCamOverride.ly, testCamOverride.lz);
+      } else if (autoTour.active) {
+        if (keysDown.size > 0) {
+          stopAutoTour();
+        } else {
+          const curWp = TOUR_WAYPOINTS[autoTour.segIdx];
+          const nextIdx = (autoTour.segIdx + 1) % TOUR_WAYPOINTS.length;
+          const nextWp = TOUR_WAYPOINTS[nextIdx];
+          autoTour.segT += dt / curWp.dur;
+          if (autoTour.segT >= 1.0) {
+            autoTour.segT = 0;
+            autoTour.segIdx = nextIdx;
+            if (autoTour.segIdx === 0) {
+              stopAutoTour();
+              showToast("Cabin 3D Tour complete! Drag or tap to explore anywhere.");
+            } else {
+              updateGameHud();
+            }
+          }
+          if (autoTour.active) {
+            const a = TOUR_WAYPOINTS[autoTour.segIdx];
+            const b = TOUR_WAYPOINTS[(autoTour.segIdx + 1) % TOUR_WAYPOINTS.length];
+            const s = autoTour.segT * autoTour.segT * (3 - 2 * autoTour.segT); // Smoothstep!
+            const px = a.pos[0] + (b.pos[0] - a.pos[0]) * s;
+            const py = a.pos[1] + (b.pos[1] - a.pos[1]) * s;
+            const pz = a.pos[2] + (b.pos[2] - a.pos[2]) * s;
+            const lx = a.look[0] + (b.look[0] - a.look[0]) * s;
+            const ly = a.look[1] + (b.look[1] - a.look[1]) * s;
+            const lz = a.look[2] + (b.look[2] - a.look[2]) * s;
+            fpv.x = px; fpv.z = pz; fpv.floor = py > 10.5 ? 2 : 1;
+            fpv.y = fpv.goalY = py - fpv.eyeHeight;
+            fpv.yaw = Math.atan2(-(lx - px), -(lz - pz));
+            fpv.pitch = Math.atan2(ly - py, Math.hypot(lx - px, lz - pz));
+            const onUpper = fpv.y > 4.5;
+            walkMainEnclosureGroup.visible = true;
+            upperFloorGroup.visible = true;
+            walkUpperEnclosureGroup.visible = onUpper;
+            upperExteriorCutawayGroup.visible = onUpper;
+            roofGroup.visible = !onUpper;
+            detectFPVRoom();
+            camera.position.set(px, py, pz);
+            camera.lookAt(lx, ly, lz);
+          }
+        }
       } else if (appMode === "explore") {
         updateFPVPhysics(dt);
         // Keep full 1st-floor interior walls, ceilings, cabinets & lighting 100% visible even when outside looking in!
@@ -3611,6 +4331,35 @@
       updateTreeTransparency(dt);
       renderer.render(scene, camera);
       updateLabels3D();
+      updateExtraOverlays3D();
+      drawMinimap();
+    }
+
+    function updateExtraOverlays3D() {
+      const w = viewport.clientWidth, h = viewport.clientHeight;
+      const v = new THREE.Vector3();
+      // Kids Hunt 3D Floating Badges
+      huntNodes.forEach(({ item, el }) => {
+        if (!huntMode || item.found || testCamOverride) { el.style.display = "none"; return; }
+        if (appMode === "planning" && item.level === 2 && !upperFloorGroup.visible) { el.style.display = "none"; return; }
+        const wy = item.level === 2 ? upperFloorGroup.position.y + item.pos[1] + 0.9 : item.pos[1] + 0.9;
+        v.set(item.pos[0], wy, item.pos[2]).project(camera);
+        if (v.z > 1 || Math.abs(v.x) > 0.95 || Math.abs(v.y) > 0.95) { el.style.display = "none"; return; }
+        el.style.display = "block";
+        el.style.left = `${(v.x * 0.5 + 0.5) * w}px`;
+        el.style.top = `${Math.max(54, (-v.y * 0.5 + 0.5) * h)}px`;
+      });
+      // Nap Sound Shield Quietness Badges
+      soundStatusBadges.forEach(b => {
+        if (!soundSimMode || appMode !== "planning" || testCamOverride) { b.el.style.display = "none"; return; }
+        if (b.level === 2 && !upperFloorGroup.visible) { b.el.style.display = "none"; return; }
+        const wy = b.level === 2 ? upperFloorGroup.position.y + b.pos[1] : b.pos[1];
+        v.set(b.pos[0], wy, b.pos[2]).project(camera);
+        if (v.z > 1 || Math.abs(v.x) > 0.95 || Math.abs(v.y) > 0.95) { b.el.style.display = "none"; return; }
+        b.el.style.display = "block";
+        b.el.style.left = `${Math.max(70, Math.min(w - 70, (v.x * 0.5 + 0.5) * w))}px`;
+        b.el.style.top = `${Math.max(58, (-v.y * 0.5 + 0.5) * h)}px`;
+      });
     }
 
     function updateTreeTransparency() {
