@@ -143,8 +143,36 @@
       position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0;
       overflow: hidden; background: var(--cp-bg); outline: none;
     }
-    #webgl-canvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+    #webgl-canvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; position: relative; z-index: 1; }
     #webgl-canvas:active { cursor: grabbing; }
+
+    /* 3D Perspective-Mapped YouTube Living Room TV Stage */
+    #tv-css3d-stage {
+      position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 5;
+    }
+    #tv-css3d-camera {
+      position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d;
+    }
+    #tv-3d-panel {
+      position: absolute; width: 352px; height: 198px; left: 0; top: 0;
+      background: var(--cp-surface); border: 2px solid var(--cp-border-strong); border-radius: 3px;
+      overflow: hidden; pointer-events: auto; backface-visibility: hidden;
+    }
+    #tv-3d-panel iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .tv-floating-bar {
+      position: absolute; left: 50%; top: 50px; transform: translateX(-50%); z-index: 17;
+      background: var(--cp-panel-strong); border: 1px solid var(--cp-border-strong);
+      border-radius: 0.625rem; padding: 4px 9px; display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 700; color: var(--cp-text); box-shadow: var(--cp-shadow);
+      white-space: nowrap; max-width: calc(100% - 20px);
+    }
+    .tv-pip-dock {
+      position: absolute; right: 12px; bottom: 98px; z-index: 18; width: 236px;
+      background: var(--cp-panel-strong); border: 1px solid var(--cp-accent);
+      border-radius: 0.625rem; padding: 5px; box-shadow: var(--cp-shadow);
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .tv-pip-dock iframe { width: 100%; height: 132px; border: 0; border-radius: 6px; display: block; }
 
     .fpv-badge {
       position: absolute; left: 12px; bottom: 12px; z-index: 16;
@@ -448,6 +476,8 @@
       #minimap-canvas { width: 96px; height: 70px; }
       .pip-card { top: 48px; right: 6px; width: 108px; padding: 4px; }
       #pip-img { height: 60px; }
+      .tv-pip-dock { right: 8px; bottom: 96px; width: 196px; }
+      .tv-pip-dock iframe { height: 110px; }
       .game-hud-pill { bottom: 96px; padding: 5px 8px; font-size: 10.5px; gap: 5px; max-width: calc(100vw - 14px); }
       .pin-label { font-size: 9.5px; padding: 2px 5px; border-radius: 6px; }
       .pin-label .pin-tag { font-size: 9px; padding: 0 4px; }
@@ -476,8 +506,9 @@
       </div>
 
       <div class="top-quick-actions">
+        <button class="btn" id="btn-tv-dock" title="Watch Mita Gami @ Live from Home on the Living Room TV!">📺 TV</button>
         <button class="btn" id="btn-tour" title="30-second hands-free guided 3D cabin tour">▶ Tour</button>
-        <button class="btn" id="btn-night" title="Toggle sunny day vs. cozy starry Thanksgiving night">🌙 Night</button>
+        <button class="btn" id="btn-night" title="Toggle sunny golden hour vs. romantic starry night">🌙 Night</button>
         <button class="btn btn-outline-accent" id="btn-top-share" title="Copy sleeping plan &amp; shareable link">Share</button>
         <button class="btn" id="btn-theme" title="Switch light or dark UI theme">◐</button>
       </div>
@@ -521,6 +552,25 @@
         </div>
 
         <canvas id="webgl-canvas"></canvas>
+        <!-- 3D PERSPECTIVE YOUTUBE LIVING ROOM TV OVERLAY -->
+        <div id="tv-css3d-stage" class="hidden">
+          <div id="tv-css3d-camera">
+            <div id="tv-3d-panel">
+              <iframe id="yt-wall-iframe" src="" title="Mita Gami @ Live from Home 2021" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </div>
+          </div>
+        </div>
+        <!-- OPTIONAL POP-OUT / SOUND TV PLAYER DOCK -->
+        <div class="tv-pip-dock hidden" id="tv-pip-dock">
+          <div class="pip-head">
+            <span>📺 Mita Gami — Live TV</span>
+            <div style="display:flex;gap:4px;align-items:center">
+              <button type="button" class="btn btn-sm" id="btn-tv-goto" style="padding:1px 6px;font-size:10px">Living Rm</button>
+              <button type="button" class="pip-close" id="btn-tv-dock-close" title="Minimize to Living Room wall TV">✕</button>
+            </div>
+          </div>
+          <iframe id="yt-dock-iframe" src="" title="Mita Gami @ Live from Home 2021" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
         <div id="labels-layer"></div>
 
         <!-- LIVE CORNER MINIMAP RADAR (WALK MODE) -->
@@ -1198,8 +1248,59 @@
         ctx.beginPath();
         ctx.moveTo(w / 2, 18); ctx.lineTo(w - 18, h / 2); ctx.lineTo(w / 2, h - 18); ctx.lineTo(18, h / 2); ctx.closePath();
         ctx.stroke();
+      }, 1, 1),
+      glowHalo: makeTex(128, 128, (ctx, w, h) => {
+        const g = ctx.createRadialGradient(w / 2, h / 2, 2, w / 2, h / 2, w / 2);
+        g.addColorStop(0, "rgba(255, 232, 185, 0.92)");
+        g.addColorStop(0.28, "rgba(255, 188, 112, 0.44)");
+        g.addColorStop(0.65, "rgba(255, 148, 68, 0.12)");
+        g.addColorStop(1, "rgba(255, 130, 50, 0.0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
       }, 1, 1)
     };
+
+    // Live Animated Canvas Texture for Living Room TV ("Mita Gami @ Live from Home 2021" warm desert-sunset DJ set!)
+    const tvCanvas = document.createElement("canvas");
+    tvCanvas.width = 320; tvCanvas.height = 180;
+    const tvCtx = tvCanvas.getContext("2d");
+    const tvLiveTex = new THREE.CanvasTexture(tvCanvas);
+    function drawTvFrame(timeSec) {
+      const w = 320, h = 180;
+      const sky = tvCtx.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, "#2c1c38");
+      sky.addColorStop(0.48, "#9e4738");
+      sky.addColorStop(0.82, "#e89249");
+      sky.addColorStop(1, "#382218");
+      tvCtx.fillStyle = sky; tvCtx.fillRect(0, 0, w, h);
+      // Warm sun orb & gentle soundwave horizon
+      const sunY = 78 + Math.sin(timeSec * 0.8) * 5;
+      const sg = tvCtx.createRadialGradient(160, sunY, 4, 160, sunY, 56);
+      sg.addColorStop(0, "rgba(255,238,190,0.95)");
+      sg.addColorStop(0.5, "rgba(255,162,84,0.45)");
+      sg.addColorStop(1, "rgba(255,120,50,0)");
+      tvCtx.fillStyle = sg; tvCtx.beginPath(); tvCtx.arc(160, sunY, 56, 0, Math.PI * 2); tvCtx.fill();
+      // Warm desert hills + DJ booth silhouette + subtle equalizer bars
+      tvCtx.fillStyle = "#261612";
+      tvCtx.beginPath(); tvCtx.moveTo(0, 132); tvCtx.quadraticCurveTo(90, 112, 175, 128); tvCtx.quadraticCurveTo(255, 140, 320, 120); tvCtx.lineTo(320, h); tvCtx.lineTo(0, h); tvCtx.fill();
+      tvCtx.fillStyle = "#140c0a";
+      tvCtx.fillRect(132, 124, 56, 26); // DJ deck table
+      tvCtx.beginPath(); tvCtx.arc(160, 108, 9, 0, Math.PI * 2); tvCtx.fill();
+      tvCtx.fillRect(149, 117, 22, 14);
+      for (let bi = 0; bi < 24; bi++) {
+        const bh = 6 + Math.abs(Math.sin(timeSec * 3.6 + bi * 0.55)) * 18;
+        tvCtx.fillStyle = "rgba(255,214,153,0.58)";
+        tvCtx.fillRect(44 + bi * 10, 164 - bh, 6, bh);
+      }
+      tvCtx.fillStyle = "rgba(255,248,235,0.92)";
+      tvCtx.font = "bold 12px Segoe UI, sans-serif";
+      tvCtx.fillText("▶ Mita Gami @ Live from Home", 14, 22);
+      tvCtx.font = "10px Segoe UI, sans-serif";
+      tvCtx.fillStyle = "rgba(255,225,190,0.82)";
+      tvCtx.fillText("Tap TV for Live YouTube Audio & Video", 14, 37);
+      tvLiveTex.needsUpdate = true;
+    }
+    drawTvFrame(0);
 
     // ==================== THREE.JS SCENE ====================
     const viewport = document.getElementById("viewport");
@@ -1215,12 +1316,12 @@
     scene.fog = new THREE.FogExp2(0xd8e2e6, 0.0022);
     const camera = new THREE.PerspectiveCamera(40, 1, 0.35, 560);
 
-    const hemiLight = new THREE.HemisphereLight(0xfff8ed, 0x5d5343, 0.84);
+    const hemiLight = new THREE.HemisphereLight(0xfff4e2, 0x78563a, 0.72);
     hemiLight.position.set(0, 85, 0);
     scene.add(hemiLight);
 
-    const sunLight = new THREE.DirectionalLight(0xfff1d8, 0.92);
-    sunLight.position.set(54, 88, 66);
+    const sunLight = new THREE.DirectionalLight(0xffebd0, 0.86);
+    sunLight.position.set(54, 82, 66);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.set(2048, 2048);
     sunLight.shadow.camera.left = -95;
@@ -1230,20 +1331,57 @@
     sunLight.shadow.bias = -0.0004;
     scene.add(sunLight);
 
+    // Romantic, Multi-Layered Intimate Cabin Lighting Pools (2200K-2700K Chandeliers, Pendants, Bedside Lamps & Sconces!)
     const interiorPointLights = [];
+    const glowSprites = [];
     const interiorLights = new THREE.Group();
+    const haloSpriteMat = new THREE.SpriteMaterial({
+      map: TEX.glowHalo, color: 0xffcf8c, transparent: true, opacity: 0.68,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    function addWarmHalo(x, y, z, scale, parent = walkMainEnclosureGroup, colHex = 0xffcf8c, op = 0.65) {
+      const m = haloSpriteMat.clone();
+      m.color.setHex(colHex);
+      m.opacity = op;
+      const sp = new THREE.Sprite(m);
+      sp.position.set(x, y, z);
+      sp.scale.set(scale, scale, 1);
+      parent.add(sp);
+      glowSprites.push({ sp, baseOp: op });
+      return sp;
+    }
+
+    // [x, y, z, dayIntensity, colorHex, distance] — curated warm pools instead of flat clinical ceiling wash!
     [
-      [14, 8.6, 6, 0.58], [15, 8.6, -7, 0.52], [4, 8.6, 6, 0.44],
-      [-15, 8.6, -5, 0.58], [-15, 8.6, 8, 0.48], [-4, 8.6, -8, 0.46],
-      [-13, 17.5, 0, 0.62], [13, 17.5, 0, 0.62], [0, 17.5, -6, 0.54]
-    ].forEach(([lx, ly, lz, intensity]) => {
-      const pl = new THREE.PointLight(0xffe9cf, intensity, 28);
+      [15.2, 7.1,  6.0, 0.72, 0xffbe78, 24], // Dining woven-bead candle chandelier
+      [16.0, 6.9, -1.0, 0.64, 0xffcf94, 20], // Kitchen 3 dome pendants over granite peninsula
+      [16.5, 7.6, -8.5, 0.44, 0xffd9ab, 18], // Kitchen sink & range warm work glow
+      [4.2,  7.4,  7.8, 0.48, 0xffc987, 18], // Entry & peeled-log stairs warm welcome pool
+      [6.5,  5.6, -5.2, 0.46, 0xffd7a6, 14], // Downstairs Bath 3-bulb Edison vanity glow
+      [-15.2,7.3, -6.2, 0.62, 0xffb870, 22], // Living Room North X-cage candle chandelier
+      [-13.4,7.3, -0.4, 0.52, 0xffb870, 20], // Living Room South X-cage candle chandelier
+      [-20.0,3.2, -3.6, 0.54, 0xffab5e, 14], // Living Room burlap drum bedside/end-table lamp!
+      [-19.8,5.2, 11.4, 0.56, 0xffbf78, 18], // Foosball Game Room warm corner lantern!
+      [-0.5, 5.0,-11.5, 0.58, 0xffb972, 16], // Downstairs Bedroom tripod floor lamp + bedside warmth!
+      [-13.2,13.6,-8.6, 0.68, 0xffbe78, 22], // Upstairs West King bedside lamps & vaulted warmth
+      [-11.2,14.2, 6.2, 0.48, 0xffc788, 16], // Upstairs West Built-In Twin Nook cozy reading glow
+      [17.8, 13.4,-1.7, 0.72, 0xffba72, 24], // Upstairs 2-Queen shared nightstand lamp romantic pool!
+      [8.5,  14.8,-5.5, 0.44, 0xffcf94, 18], // Upstairs 2-Queen white loveseat reading corner
+      [-2.2, 15.2,-5.8, 0.52, 0xffdab0, 16]  // Upstairs Bath dual-mirror Edison vanity glow
+    ].forEach(([lx, ly, lz, intensity, col, dist]) => {
+      const pl = new THREE.PointLight(col, intensity, dist);
       pl.position.set(lx, ly, lz);
       pl.userData.dayInt = intensity;
+      pl.userData.baseCol = col;
       interiorLights.add(pl);
       interiorPointLights.push(pl);
     });
     scene.add(interiorLights);
+
+    // Living Room TV Screen Warm Sunset Spill Light ("Mita Gami @ Live from Home" glow on rug & console!)
+    const tvGlowLight = new THREE.PointLight(0xf29a58, 0.52, 14);
+    tvGlowLight.position.set(-15.6, 3.6, -11.4);
+    scene.add(tvGlowLight);
 
     const fireLight = new THREE.PointLight(0xff8430, 1.35, 34);
     fireLight.position.set(8.5, 2.8, 53.5);
@@ -2093,14 +2231,16 @@
 
     // ==================== 2. PHOTO-VERIFIED DOWNSTAIRS WITH REAL CUT-OUT WINDOWS ====================
     // ==================== 2. FORENSIC-VERIFIED DOWNSTAIRS (SUNKEN WEST LIVING WING + CENTRAL EAST-WEST HALL!) ====================
-    // East Main Floor (Y = 0.60 top) + Central Slate Hallway + Sunken West Living/Game Floor (Y = 0.22 top — 2 carpeted steps lower!)
-    box(13.0, 0.6, 14.2, MAT.hardwood, 15.0, 0.3, 6.65, mainFloorGroup, "dining", false);
-    box(13.0, 0.6, 13.3, MAT.hardwood, 15.0, 0.3, -7.1, mainFloorGroup, "kitchen", false);
+    // East Main Floor (Y = 0.60 top) + Central Slate Hallway + Sunken West Living/Game Floor (Y = 0.24 top — sealed tight under every wall!)
+    box(13.4, 0.6, 14.25, MAT.hardwood, 15.1, 0.3, 6.65, mainFloorGroup, "dining", false);
+    box(13.4, 0.6, 13.35, MAT.hardwood, 15.1, 0.3, -7.1, mainFloorGroup, "kitchen", false);
     box(7.5, 0.6, 11.8, MAT.hardwood, 4.75, 0.3, 7.85, mainFloorGroup, "entry", false);
     box(5.2, 0.62, 4.0, MAT.slate, 6.5, 0.32, 11.7, mainFloorGroup, "entry", false);
     // Central East-West Slate & Wood Hallway (Z = -2.0..+2.0, running straight from Kitchen X=+8.5 to Living Room Steps X=-9.2!)
     box(7.5, 0.6, 4.0, MAT.slate, 4.75, 0.3, 0.0, mainFloorGroup, "entry", false);
-    box(10.2, 0.6, 3.8, MAT.hardwood, -4.1, 0.3, -0.1, mainFloorGroup, "entry", false);
+    box(10.3, 0.6, 4.0, MAT.hardwood, -4.05, 0.3, 0.0, mainFloorGroup, "entry", false);
+    // Vertical pine/carpet step riser fascia at X = -9.2 so there is ZERO vertical gap at the 2 carpeted steps!
+    box(0.18, 0.42, 3.6, MAT.knottyPine, -9.22, 0.40, -0.1, mainFloorGroup, "living", false);
     // Downstairs Bathroom (Rear-Center, Z = -13.75..-2.0, X = +1.0..+8.5)
     box(7.5, 0.6, 11.75, MAT.slate, 4.75, 0.3, -7.88, mainFloorGroup, "down_bath", false);
     // Downstairs Bedroom (Rear-Center-West, Z = -13.75..-2.0, X = -9.2..+1.0)
@@ -2119,11 +2259,11 @@
     // Foosball Game Room (X = -21.75..-11.8, Z = +2.8..+13.75, Floor top Y = 0.24 — 10ft wide matching 3 front windows in Photo #7!)
     box(9.95, 0.28, 10.95, MAT.carpet, -16.78, 0.10, 8.28, mainFloorGroup, "game", false);
 
-    const WALL_H = 4.6, FULL_H1 = 9.2;
+    const WALL_H = 4.6, FULL_H1 = 9.2, FULL_H1_SUNK = 9.52;
 
-    // NORTH BACK WALL (-Z = -13.75)
+    // NORTH BACK WALL (-Z = -13.75 — FULL_H1_SUNK seals sunken Living Room wall 100% tight into Y=9.65 ceiling!)
     buildWallAxis("x", -13.75, -21.75, -9.2, [], {
-      level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.24, thick: 0.6, mat: MAT.logWall, innerMat: MAT.shiplapV, innerSign: 1,
+      level: 1, cutH: WALL_H, fullH: FULL_H1_SUNK, yBase: 0.24, thick: 0.6, mat: MAT.logWall, innerMat: MAT.shiplapV, innerSign: 1,
       cutParent: mainFloorGroup, walkParent: mainTallWallsGroup
     });
     buildWallAxis("x", -13.75, -9.2, 1.0, [], {
@@ -2145,7 +2285,7 @@
 
     // SOUTH FRONT PORCH WALL (+Z = +13.75 — 3 Foosball high windows spanning X=-20.6..-12.8 + 1 small utility closet window + Double Doors + 2 Dining windows, Photo #9!)
     buildWallAxis("x", 13.75, -21.75, 1.0, [], {
-      level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.24, thick: 0.6, mat: MAT.logWall, innerMat: MAT.shiplapV, innerSign: -1,
+      level: 1, cutH: WALL_H, fullH: FULL_H1_SUNK, yBase: 0.24, thick: 0.6, mat: MAT.logWall, innerMat: MAT.shiplapV, innerSign: -1,
       cutParent: mainFloorGroup, walkParent: mainTallWallsGroup,
       windows: [
         [-20.4, -18.2, 5.1, 6.8, 0, false], [-17.8, -15.6, 5.1, 6.8, 0, false], [-15.2, -13.0, 5.1, 6.8, 0, false],
@@ -2160,7 +2300,7 @@
 
     // WEST GABLE WALL (-X = -21.75 — Living Room rear window + Foosball front window cleanly above Hot Tub rim just like Photo #18 0b337e52!)
     buildWallAxis("z", -21.75, -13.75, 13.75, [], {
-      level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.24, thick: 0.6, mat: MAT.logWall, innerMat: MAT.shiplapV, innerSign: 1,
+      level: 1, cutH: WALL_H, fullH: FULL_H1_SUNK, yBase: 0.24, thick: 0.6, mat: MAT.logWall, innerMat: MAT.shiplapV, innerSign: 1,
       cutParent: mainFloorGroup, walkParent: mainTallWallsGroup,
       windows: [[-9.6, -4.6, 3.55, 6.65, 1, true], [5.4, 9.6, 3.55, 6.65, 1, true]]
     });
@@ -2180,15 +2320,22 @@
     box(0.32, 0.75, 0.75, MAT.stainless, 24.22, 4.2, 5.8, mainFloorGroup, null, false); // Stainless direct-vent fireplace cap (#2!)
     [[-21.75, -13.75], [21.75, -13.75], [-21.75, 13.75], [21.75, 13.75]].forEach(([cx, cz]) => addLogCorners(cx, cz, WALL_H, 0.6, mainFloorGroup));
 
-    // Craftsman Double Front Doors with Upper Glass Panes (A5, A8, C12)
-    // Craftsman Double Front Doors swung flush open so 4ft entry is completely clear!
+    // Full-Height 6.8ft Craftsman Double Front Doors with Multi-Pane Upper Glass & Bronze Handles (cutaway lower + full-height upper!)
     [ [4.55, 1.50], [8.45, -1.50] ].forEach(([dx, rot]) => {
       const dg = new THREE.Group();
       dg.position.set(dx, 2.75, 12.75);
       dg.rotation.y = rot;
-      box(1.85, 4.3, 0.22, MAT.darkDoor, 0, 0, 0, dg, "entry");
-      box(1.3, 1.1, 0.25, MAT.glassBlock, 0, 1.2, 0, dg, "entry", false);
+      box(1.85, 4.3, 0.20, MAT.darkDoor, 0, 0, 0, dg, "entry");
+      box(0.10, 0.42, 0.30, MAT.iron, rot > 0 ? 0.72 : -0.72, 0.55, 0, dg, "entry", false);
       mainFloorGroup.add(dg);
+      const dgTop = new THREE.Group();
+      dgTop.position.set(dx, 6.15, 12.75);
+      dgTop.rotation.y = rot;
+      box(1.85, 2.55, 0.20, MAT.darkDoor, 0, 0, 0, dgTop, "entry");
+      box(1.36, 1.85, 0.24, MAT.glass, 0, 0.05, 0, dgTop, "entry", false);
+      box(1.40, 0.09, 0.26, MAT.darkDoor, 0, 0.05, 0, dgTop, "entry", false);
+      box(0.09, 1.88, 0.26, MAT.darkDoor, 0, 0.05, 0, dgTop, "entry", false);
+      walkMainEnclosureGroup.add(dgTop);
     });
 
     // --- Forensic-Exact Downstairs Interior Partitions (Photos #1-#8!) ---
@@ -2198,6 +2345,10 @@
     buildWallAxis("x", 2.0, 4.1, 8.5, [[4.4, 7.9]], { level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.6, thick: 0.35, mat: MAT.drywall, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
     // 3. Central Slate Hallway -> Downstairs Bath Wall (Z = -2.0, X = +1.0..+8.5, open doorway X = +4.2..+7.6, Photo #4!)
     buildWallAxis("x", -2.0, 1.0, 8.5, [[4.2, 7.6]], { level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.6, thick: 0.35, mat: MAT.drywall, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
+    addOpenPineDoor(4.25, 0.6, -2.18, -1.52, walkMainEnclosureGroup);
+    // Mudroom wood coat-hook rail in slate vestibule (Photo #4 4a20fe92!)
+    box(2.6, 0.28, 0.12, MAT.knottyPine, 2.6, 5.4, -1.78, walkMainEnclosureGroup, null, false);
+    [1.7, 2.3, 2.9, 3.5].forEach(hx => box(0.08, 0.20, 0.22, MAT.iron, hx, 5.38, -1.72, walkMainEnclosureGroup, null, false));
     // 4. Closed Staircase Back Wall (X = +1.0, Z = +1.8..+13.75 — meets South Front Wall in a solid 90-degree corner, Photo #2 & #3!)
     buildWallAxis("z", 1.0, 1.8, 13.75, [], { level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.6, thick: 0.35, mat: MAT.drywall, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
     // Wood-framed mirror on South wall right above bottom stair landing (Photos #2 & #3!)
@@ -2208,9 +2359,8 @@
     // 6. Central East-West Hallway Walls (Z = -2.0 on North, Z = +1.8 on South, running X = -9.2..+1.0 straight between Kitchen/Hall and Living Room!)
     buildWallAxis("x", -2.0, -9.2, 1.0, [], { level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.6, thick: 0.32, mat: MAT.drywall, innerMat: MAT.shiplapH, innerSign: -1, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
     buildWallAxis("x", 1.8, -9.2, 1.0, [], { level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.6, thick: 0.32, mat: MAT.drywall, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
-    // 7. Living Room East Shiplap Wall (X = -9.2, Z = -13.75..+2.8):
-    //    Holds Beige Sofa (Z=-13..-6), Knotty-Pine Bedroom Door (Z=-5.5..-2.2), and Wood-Trimmed Hallway Opening w/ 2 Carpeted Steps (Z=-1.8..+1.6)! Exact match to Photo #5!
-    buildWallAxis("z", -9.2, -13.75, 2.8, [[-5.5, -2.2], [-1.8, 1.6]], { level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.24, thick: 0.35, mat: MAT.shiplapV, innerMat: MAT.shiplapH, innerSign: 1, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
+    // 7. Living Room East Shiplap Wall (X = -9.2, Z = -13.75..+2.8 — FULL_H1_SUNK seals tight to ceiling!):
+    buildWallAxis("z", -9.2, -13.75, 2.8, [[-5.5, -2.2], [-1.8, 1.6]], { level: 1, cutH: WALL_H, fullH: FULL_H1_SUNK, yBase: 0.24, thick: 0.35, mat: MAT.shiplapV, innerMat: MAT.shiplapH, innerSign: 1, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
     addOpenPineDoor(-9.05, 0.55, -2.25, 1.54, walkMainEnclosureGroup);
     // 2 Carpeted Step-Down Treads + Thick Round Peeled-Log Post & Log Railing at Living Room Entrance (exact match to user's closeup photo!)
     box(1.1, 0.38, 3.2, MAT.carpet, -9.75, 0.42, -0.1, mainFloorGroup, "living");
@@ -2221,18 +2371,17 @@
     const stepTopRail = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1.65, 10), MAT.logBeam);
     stepTopRail.rotation.z = Math.PI / 2; stepTopRail.position.set(-10.0, 3.05, 1.48); mainFloorGroup.add(stepTopRail);
     const stepBotRail = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.65, 10), MAT.logBeam);
-    stepBotRail.rotation.z = Math.PI / 2; stepBotRail.position.set(-10.0, 0.95, 1.48); mainFloorGroup.add(stepBotRail);
+    stepBotRail.rotation.z = Math.PI / 2; stepTopRail.castShadow = true; stepBotRail.position.set(-10.0, 0.95, 1.48); mainFloorGroup.add(stepBotRail);
     [-9.55, -10.0, -10.42].forEach(sx => {
       const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 2.05, 8), MAT.logBeam);
       sp.position.set(sx, 2.0, 1.48);
       mainFloorGroup.add(sp);
     });
-    // 8. Foosball Game Room East Teal Wood Wall + Rustic US Flag AT X = -11.8 (separating Foosball Room on West from Closed Utility Closet on East!)
-    buildWallAxis("z", -11.8, 2.8, 13.75, [], { level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.24, thick: 0.35, mat: MAT.drywall, innerMat: MAT.shiplapTeal, innerSign: -1, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
+    // 8. Foosball Game Room East Teal Wood Wall + Rustic US Flag AT X = -11.8 (FULL_H1_SUNK seals tight to ceiling!)
+    buildWallAxis("z", -11.8, 2.8, 13.75, [], { level: 1, cutH: WALL_H, fullH: FULL_H1_SUNK, yBase: 0.24, thick: 0.35, mat: MAT.drywall, innerMat: MAT.shiplapTeal, innerSign: -1, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
     box(0.10, 2.2, 4.0, MAT.usFlag, -12.04, 5.4, 8.2, walkMainEnclosureGroup, null, false);
-    // 9. Living Room South Wall (Z = +2.8, X = -21.75..-9.2 — Exact 4-zone match to Photo #6!):
-    //    BOTH openings ([-21.55, -17.7] Open Barn Doorway AND [-11.35, -9.55] Narrow Closed Closet Doorway) are REAL cut-out framed doorways — zero wall baking/overlap!
-    buildWallAxis("x", 2.8, -21.75, -9.2, [[-21.55, -17.7], [-11.35, -9.55]], { level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.24, thick: 0.35, mat: MAT.shiplapH, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup, frameDoors: true });
+    // 9. Living Room South Wall (Z = +2.8, X = -21.75..-9.2 — FULL_H1_SUNK seals tight to ceiling!):
+    buildWallAxis("x", 2.8, -21.75, -9.2, [[-21.55, -17.7], [-11.35, -9.55]], { level: 1, cutH: WALL_H, fullH: FULL_H1_SUNK, yBase: 0.24, thick: 0.35, mat: MAT.shiplapH, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup, frameDoors: true });
     addCollider(1, -11.4, 2.8, -9.5, 2.8); // Closed closet door stays solid in Walk Inside mode!
     // Crisp 3D Closed 6-Panel Knotty-Pine Closet Door cleanly mounted INSIDE the [-11.35, -9.55] cut-out frame (cutaway lower + full-height upper!)
     box(1.62, 4.32, 0.14, MAT.knottyPine, -10.45, 2.40, 2.80, mainFloorGroup, null, false);
@@ -2252,16 +2401,37 @@
     box(0.68, 0.78, 27.0, MAT.logBeam, 12.2, 9.05, 0, walkMainEnclosureGroup, null, false);
     box(12.6, 0.72, 0.55, MAT.knottyPine, -15.5, 8.85, 2.60, walkMainEnclosureGroup, null, false); // Heavy pine beam above Barn Door (Photo #6!)
     box(0.18, 0.62, 0.20, MAT.iron, -9.55, 8.82, 2.32, walkMainEnclosureGroup, null, false); // Black iron beam bracket on far-left!
-    const dinChand = new THREE.Mesh(new THREE.ConeGeometry(0.95, 1.3, 12), MAT.couchBeige);
-    dinChand.position.set(15.2, 7.6, 6.2);
-    walkMainEnclosureGroup.add(dinChand);
+    // Detailed Beaded Empire Dining Chandelier + Warm Candle Cluster & Soft Bloom Halo (Photo efdc656b!)
+    const dinChandGrp = new THREE.Group();
+    dinChandGrp.position.set(15.2, 7.35, 5.8);
+    box(0.06, 2.1, 0.06, MAT.iron, 0, 1.25, 0, dinChandGrp, null, false);
+    const dinRing = new THREE.Mesh(new THREE.TorusGeometry(0.92, 0.06, 8, 24), MAT.iron);
+    dinRing.rotation.x = Math.PI / 2; dinChandGrp.add(dinRing);
+    for (let bi = 0; bi < 12; bi++) {
+      const a = (bi / 12) * Math.PI * 2;
+      const strand = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.35, 6), MAT.couchBeige);
+      strand.position.set(Math.cos(a) * 0.52, 0.52, Math.sin(a) * 0.52);
+      strand.rotation.set(Math.sin(a) * 0.52, 0, -Math.cos(a) * 0.52);
+      dinChandGrp.add(strand);
+    }
+    [[-0.35, 0], [0.35, 0], [0, -0.35], [0, 0.35]].forEach(([bx, bz]) => {
+      box(0.14, 0.28, 0.14, MAT.warmBulb, bx, 0.15, bz, dinChandGrp, null, false);
+    });
+    walkMainEnclosureGroup.add(dinChandGrp);
+    addWarmHalo(15.2, 7.45, 5.8, 3.6, walkMainEnclosureGroup, 0xffc680, 0.72);
+
+    // 3 White Kitchen Dome Pendants + Warm Glowing Bulbs & Halos over Speckled Granite Peninsula
     [13.6, 16.0, 18.4].forEach(px => {
       box(0.06, 1.8, 0.06, MAT.iron, px, 8.4, -1.0, walkMainEnclosureGroup, null, false);
-      const dome = new THREE.Mesh(new THREE.ConeGeometry(0.65, 0.55, 14), MAT.whiteAppliance);
+      const dome = new THREE.Mesh(new THREE.ConeGeometry(0.65, 0.55, 14, 1, true), MAT.whiteAppliance);
       dome.position.set(px, 7.4, -1.0);
       walkMainEnclosureGroup.add(dome);
+      const pBulb = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), MAT.warmBulb);
+      pBulb.position.set(px, 7.22, -1.0);
+      walkMainEnclosureGroup.add(pBulb);
+      addWarmHalo(px, 7.18, -1.0, 2.3, walkMainEnclosureGroup, 0xffd296, 0.58);
     });
-    // 2 Open-Frame X-Braced Iron & Wood Cage Chandeliers + Warm Candle Bulbs in Living Room (exact match to user's screenshot!)
+    // 2 Open-Frame X-Braced Iron & Wood Cage Chandeliers + 4 Romantic Candle Bulbs & Halos in Living Room
     [ [-15.2, -6.5], [-13.4, -0.4] ].forEach(([cx, cz]) => {
       const cg = new THREE.Group();
       cg.position.set(cx, 7.85, cz);
@@ -2283,8 +2453,11 @@
           xb2.position.set(fz, 0, 0); xb2.rotation.x = ang; cg.add(xb2);
         });
       });
-      box(0.32, 0.45, 0.32, MAT.warmBulb, 0, 0, 0, cg, null, false);
+      [[-0.18, -0.18], [0.18, 0.18], [-0.18, 0.18], [0.18, -0.18]].forEach(([bx, bz]) => {
+        box(0.11, 0.28, 0.11, MAT.warmBulb, bx, -0.05, bz, cg, null, false);
+      });
       walkMainEnclosureGroup.add(cg);
+      addWarmHalo(cx, 7.80, cz, 3.2, walkMainEnclosureGroup, 0xffc078, 0.66);
     });
     // 1st-Floor Ceiling Panels + Stairwell Interior Ceiling tucked strictly INSIDE roof & center dormer (NEVER pokes outside roof!)
     box(22.7, 0.25, 27.4, MAT.ceilingWhite, -10.35, 9.65, 0, walkMainEnclosureGroup, null, false);
@@ -2383,47 +2556,71 @@
     const dinFlameMesh = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.15, 8), new THREE.MeshBasicMaterial({ color: 0xff7722 }));
     dinFlameMesh.position.set(19.45, 1.35, 5.8);
     mainFloorGroup.add(dinFlameMesh);
+    // Hearth firewood logs + warm fireplace bloom + framed mountain landscape painting above mantel
+    box(0.32, 0.28, 1.5, MAT.pineTrunk, 19.55, 0.92, 5.8, mainFloorGroup, "dining", false);
+    addWarmHalo(19.25, 1.45, 5.8, 3.0, mainFloorGroup, 0xff8a36, 0.65);
     box(2.1, 0.32, 5.0, MAT.logBeam, 20.4, 4.1, 5.8, mainFloorGroup, "dining");
-    box(0.15, 2.2, 2.2, MAT.couchWhite, 21.3, 6.2, 5.8, walkMainEnclosureGroup, null, false);
+    box(0.18, 2.35, 2.75, MAT.darkWood, 21.28, 6.2, 5.8, walkMainEnclosureGroup, null, false);
+    box(0.22, 1.95, 2.35, MAT.birchWall, 21.24, 6.2, 5.8, walkMainEnclosureGroup, null, false);
 
-    // Kitchen Shaker Cabinets, Speckled Granite Peninsula, SS Range + Microwave + Sink + Fridge (A10, A11)
+    // Kitchen Shaker Cabinets, Speckled Granite Peninsula, Gooseneck Faucet, Coffee Maker, SS Range + Microwave + Fridge
     box(8.4, 2.9, 2.6, MAT.shakerCab, 16.9, 2.05, -1.2, mainFloorGroup, "kitchen");
     box(8.8, 0.22, 3.2, MAT.granite, 16.8, 3.6, -1.0, mainFloorGroup, "kitchen");
     [13.4, 15.8, 18.2].forEach(sx => box(1.2, 2.1, 1.2, MAT.iron, sx, 1.65, 0.95, mainFloorGroup, "kitchen"));
     box(8.6, 3.0, 2.2, MAT.shakerCab, 16.9, 2.1, -12.3, mainFloorGroup, "kitchen");
     box(8.8, 0.2, 2.3, MAT.granite, 16.9, 3.65, -12.3, mainFloorGroup, "kitchen");
-    box(2.4, 2.9, 2.2, MAT.stainless, 13.0, 2.05, -12.2, mainFloorGroup, "kitchen"); // Dishwasher
-    box(2.2, 0.14, 1.6, MAT.stainless, 15.8, 3.68, -12.2, mainFloorGroup, "kitchen"); // Kitchen sink
+    box(2.4, 2.9, 2.2, MAT.stainless, 13.0, 2.05, -12.2, mainFloorGroup, "kitchen");
+    box(2.2, 0.14, 1.6, MAT.stainless, 15.8, 3.68, -12.2, mainFloorGroup, "kitchen");
+    // High-arch brushed-nickel gooseneck faucet + coffee maker + wood cutting board!
+    box(0.10, 1.05, 0.10, MAT.stainless, 15.8, 4.22, -12.92, mainFloorGroup, "kitchen", false);
+    box(0.10, 0.10, 0.55, MAT.stainless, 15.8, 4.72, -12.68, mainFloorGroup, "kitchen", false);
+    box(0.85, 1.15, 0.90, MAT.iron, 19.8, 4.25, -12.3, mainFloorGroup, "kitchen", false); // Coffee maker
+    box(1.3, 0.08, 0.95, MAT.knottyPine, 14.2, 3.74, -1.0, mainFloorGroup, "kitchen", false); // Wood serving board on island
+
     // Upper North & East Cabinets + Stainless Over-Range Microwave (A10, A11!)
     box(1.9, 2.6, 1.4, MAT.shakerCab, 12.9, 6.9, -12.7, walkMainEnclosureGroup, null, false);
     box(2.8, 2.6, 1.4, MAT.shakerCab, 19.4, 6.9, -12.7, walkMainEnclosureGroup, null, false);
     box(1.4, 2.6, 8.8, MAT.shakerCab, 20.7, 6.9, -6.8, walkMainEnclosureGroup, null, false);
-    box(1.6, 1.5, 2.6, MAT.stainless, 20.5, 6.2, -6.8, walkMainEnclosureGroup, null, false); // Microwave!
+    box(1.6, 1.5, 2.6, MAT.stainless, 20.5, 6.2, -6.8, walkMainEnclosureGroup, null, false);
     box(2.2, 3.0, 8.8, MAT.shakerCab, 20.3, 2.1, -6.8, mainFloorGroup, "kitchen");
     box(2.3, 0.2, 9.0, MAT.granite, 20.3, 3.65, -6.8, mainFloorGroup, "kitchen");
-    box(2.6, 3.1, 2.6, MAT.stainless, 20.1, 2.15, -6.8, mainFloorGroup, "kitchen"); // Range
-    box(2.2, 0.08, 2.2, MAT.iron, 20.0, 3.72, -6.8, mainFloorGroup, "kitchen"); // Black burner grates
-    box(0.12, 1.8, 2.8, MAT.granite, 21.32, 4.6, -6.8, walkMainEnclosureGroup, null, false); // Granite backsplash behind stove
-    box(0.1, 1.4, 2.0, MAT.iron, 18.78, 2.1, -6.8, mainFloorGroup, "kitchen"); // Oven glass window
-    box(2.2, 5.8, 2.8, MAT.stainless, 9.8, 3.5, -4.5, mainFloorGroup, "kitchen"); // Fridge tucked on West kitchen wall
+    box(2.6, 3.1, 2.6, MAT.stainless, 20.1, 2.15, -6.8, mainFloorGroup, "kitchen");
+    box(2.2, 0.08, 2.2, MAT.iron, 20.0, 3.72, -6.8, mainFloorGroup, "kitchen");
+    box(0.12, 1.8, 2.8, MAT.granite, 21.32, 4.6, -6.8, walkMainEnclosureGroup, null, false);
+    box(0.1, 1.4, 2.0, MAT.iron, 18.78, 2.1, -6.8, mainFloorGroup, "kitchen");
+    box(2.2, 5.8, 2.8, MAT.stainless, 9.8, 3.5, -4.5, mainFloorGroup, "kitchen");
 
-    // Downstairs Bathroom (B5, B6)
+    // Downstairs Bathroom + 3-Bulb Edison Vanity Light Bar & Sink Faucet (Photo #4 4a20fe92!)
     box(1.8, 2.7, 3.6, MAT.shakerCab, 7.4, 1.95, -5.2, mainFloorGroup, "down_bath");
     box(1.9, 0.18, 3.8, MAT.granite, 7.4, 3.35, -5.2, mainFloorGroup, "down_bath");
-    box(0.12, 2.4, 2.2, MAT.mirror, 8.22, 4.9, -5.2, walkMainEnclosureGroup, null, false);
+    box(0.95, 0.12, 1.35, MAT.whiteAppliance, 7.35, 3.42, -5.2, mainFloorGroup, "down_bath", false);
+    box(0.32, 0.45, 0.10, MAT.iron, 7.95, 3.62, -5.2, mainFloorGroup, "down_bath", false);
+    box(0.16, 2.5, 2.3, MAT.iron, 8.20, 4.9, -5.2, walkMainEnclosureGroup, null, false);
+    box(0.12, 2.25, 2.05, MAT.mirror, 8.16, 4.9, -5.2, walkMainEnclosureGroup, null, false);
+    box(0.18, 0.16, 1.9, MAT.iron, 8.12, 6.45, -5.2, walkMainEnclosureGroup, null, false);
+    [-5.85, -5.2, -4.55].forEach(bz => {
+      const vb = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), MAT.warmBulb);
+      vb.position.set(7.98, 6.32, bz); walkMainEnclosureGroup.add(vb);
+    });
+    addWarmHalo(7.9, 6.3, -5.2, 2.4, walkMainEnclosureGroup, 0xffd59e, 0.58);
     box(1.6, 2.0, 2.0, MAT.whiteAppliance, 6.8, 1.6, -11.8, mainFloorGroup, "down_bath");
     box(3.2, 2.1, 5.4, MAT.whiteAppliance, 2.8, 1.65, -10.5, mainFloorGroup, "down_bath");
     box(2.4, 0.25, 4.6, MAT.water, 2.8, 2.58, -10.5, mainFloorGroup, "down_bath", false);
 
-    // Downstairs Bedroom: Knotty-Pine Bi-Fold Closet + 4 Wood Plaques on LEFT (X = -8.88) & Wood Tripod Lamp on RIGHT (Photo #8!)
+    // Downstairs Bedroom: Bi-Fold Closet + Nightstand w/ Bedside Lamp + Glowing Tripod Floor Lamp (Photo #8!)
     box(0.35, 6.4, 4.0, MAT.knottyPine, -8.88, 3.8, -8.2, walkMainEnclosureGroup, null, false);
     box(0.35, 4.1, 4.0, MAT.knottyPine, -8.88, 2.65, -8.2, mainFloorGroup, "down_bed");
     [ [-5.8, 5.2], [-10.8, 5.2], [-5.8, 3.9], [-10.8, 3.9] ].forEach(([pz, py]) => {
       box(0.12, 1.0, 1.0, MAT.darkWood, -8.96, py, pz, walkMainEnclosureGroup, null, false);
     });
-    const lampShade = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.85, 1.0, 16), MAT.whiteAppliance);
+    box(1.5, 1.65, 1.5, MAT.darkWood, -7.2, 1.38, -12.3, mainFloorGroup, "down_bed"); // Bedside nightstand
+    const dnBedLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.44, 0.62, 12), MAT.warmBulb);
+    dnBedLamp.position.set(-7.2, 2.55, -12.3); mainFloorGroup.add(dnBedLamp);
+    addWarmHalo(-7.2, 2.55, -12.3, 2.2, mainFloorGroup, 0xffc682, 0.62);
+    const lampShade = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.85, 1.0, 16), MAT.warmBulb);
     lampShade.position.set(-0.2, 4.8, -12.0);
     mainFloorGroup.add(lampShade);
+    addWarmHalo(-0.2, 4.8, -12.0, 3.0, mainFloorGroup, 0xffc580, 0.68);
     [-0.25, 0, 0.25].forEach((off, idx) => {
       const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 4.4, 6), MAT.logBeam);
       leg.position.set(-0.2 + off, 2.4, -12.0 + (idx === 1 ? 0.25 : -0.15));
@@ -2439,9 +2636,10 @@
     livFireGlass.userData.propAction = "liv_fire";
     const livFlameMesh = box(1.6, 0.55, 0.16, new THREE.MeshBasicMaterial({ color: 0xf97316 }), -15.6, 0.98, -11.80, mainFloorGroup, "living", false);
     livFlameMesh.userData.propAction = "liv_fire";
-    const livTvFrame = box(3.8, 2.2, 0.16, MAT.iron, -15.6, 3.5, -12.8, mainFloorGroup, "living");
+    addWarmHalo(-15.6, 1.05, -11.65, 2.4, mainFloorGroup, 0xff8533, 0.62);
+    const livTvFrame = box(3.8, 2.2, 0.16, MAT.iron, -15.6, 3.55, -12.8, mainFloorGroup, "living");
     livTvFrame.userData.propAction = "liv_tv";
-    const livTvScreenMesh = box(3.5, 1.95, 0.18, MAT.tvScreen.clone(), -15.6, 3.5, -12.76, mainFloorGroup, "living", false);
+    const livTvScreenMesh = box(3.52, 1.98, 0.18, new THREE.MeshBasicMaterial({ map: tvLiveTex }), -15.6, 3.55, -12.74, mainFloorGroup, "living", false);
     livTvScreenMesh.userData.propAction = "liv_tv";
     pickables.push(livTvScreenMesh);
     // Beige 3-Cushion Sofa + Buffalo-Plaid Pillows on East wall X = -10.8, Z = -12.5..-6.2 (right next to Knotty-Pine Bedroom Door, Photo #5!)
@@ -2454,9 +2652,10 @@
     box(0.45, 0.85, 0.95, MAT.redDoor, -20.4, 1.95, -9.0, mainFloorGroup, "living", false);
     box(0.45, 0.85, 0.95, MAT.iron, -20.4, 1.95, -5.8, mainFloorGroup, "living", false);
     box(1.8, 1.5, 1.8, MAT.darkWood, -20.2, 1.0, -3.6, mainFloorGroup, "living");
-    const livLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.72, 0.9, 14), MAT.logBeam);
+    const livLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.68, 0.85, 14), MAT.warmBulb);
     livLamp.position.set(-20.2, 2.4, -3.6);
     mainFloorGroup.add(livLamp);
+    addWarmHalo(-20.2, 2.4, -3.6, 2.6, mainFloorGroup, 0xffbe76, 0.68);
     // 2 Cream Armchairs side-by-side in foreground facing TV (Photo #5 bottom-right & Photo #6 bottom-right!)
     [-16.4, -13.2].forEach(ax => {
       box(2.4, 1.35, 2.4, MAT.couchWhite, ax, 0.92, -1.8, mainFloorGroup, "living");
@@ -2479,19 +2678,38 @@
     const gameLamp = new THREE.Mesh(new THREE.ConeGeometry(0.65, 0.65, 14), MAT.warmBulb);
     gameLamp.position.set(-20.6, 5.1, 12.2);
     mainFloorGroup.add(gameLamp);
+    addWarmHalo(-20.6, 5.1, 12.2, 2.8, mainFloorGroup, 0xffc882, 0.66);
     box(2.0, 2.4, 2.0, MAT.iron, -13.6, 1.45, 12.0, mainFloorGroup, "game");
     box(2.0, 1.4, 1.7, MAT.darkWood, -19.2, 0.95, 12.1, mainFloorGroup, "game");
 
-    // ==================== 3. PHOTO-VERIFIED UPSTAIRS (SOLID 6FT HALLWAY CLEAR OF STAIRWELL!) ====================
-    box(15.0, 0.5, 23.6, MAT.carpet, -13.0, 0.25, 0, upperFloorGroup, "up_west", false);
-    box(15.0, 0.5, 23.6, MAT.carpet, 13.0, 0.25, 0, upperFloorGroup, "up_east", false);
-    box(4.8, 0.5, 6.3, MAT.carpet, -7.9, 0.25, -8.65, upperFloorGroup, "up_closet", false);
+    // ==================== 3. PHOTO-VERIFIED UPSTAIRS (100% SEALED CORNERS, FINISHED STAIRWELL RAILINGS & ROMANTIC BEDSIDE LAMPS!) ====================
+    box(15.2, 0.5, 23.6, MAT.carpet, -13.1, 0.25, 0, upperFloorGroup, "up_west", false);
+    box(15.2, 0.5, 23.6, MAT.carpet, 13.1, 0.25, 0, upperFloorGroup, "up_east", false);
+    box(5.8, 0.5, 6.3, MAT.carpet, -7.4, 0.25, -8.65, upperFloorGroup, "up_closet", false);
     box(10.0, 0.5, 9.3, MAT.slate, 0.5, 0.25, -7.15, upperFloorGroup, "up_bath", false);
+    // Seal the X=-5.5..-4.5, Z=-5.5..-2.5 NW hallway/closet floor corner 100% tight!
+    box(1.4, 0.5, 3.4, MAT.carpet, -5.0, 0.25, -4.0, upperFloorGroup, "up_hall", false);
     // Solid 6.0ft-wide East-West Upstairs Hallway (Z = -2.5..+3.5) completely North of the Stairwell (Z = +3.5..+11.8)!
-    box(11.0, 0.5, 6.0, MAT.carpet, 0.0, 0.25, 0.5, upperFloorGroup, "up_hall", false);
+    box(11.2, 0.5, 6.1, MAT.carpet, 0.0, 0.25, 0.5, upperFloorGroup, "up_hall", false);
     box(6.5, 0.5, 8.3, MAT.carpet, -2.25, 0.25, 7.65, upperFloorGroup, "up_hall", false);
-    box(1.3, 0.5, 8.3, MAT.carpet, 4.85, 0.25, 7.65, upperFloorGroup, "up_hall", false);
-    box(0.2, 3.0, 8.3, MAT.logBeam, 0.95, 1.9, 7.65, upperFloorGroup, "up_hall");
+    box(1.4, 0.5, 8.3, MAT.carpet, 4.85, 0.25, 7.65, upperFloorGroup, "up_hall", false);
+    box(3.4, 0.5, 0.8, MAT.carpet, 2.55, 0.25, 11.4, upperFloorGroup, "up_hall", false); // South stairwell floor header!
+    // Finished Knotty-Pine Stairwell Fascia Trim Skirt + Peeled-Log Spindle Baluster Railings on BOTH Sides & South End!
+    box(0.18, 0.72, 7.8, MAT.knottyPine, 1.02, 0.16, 7.3, upperFloorGroup, null, false);
+    box(0.18, 0.72, 7.8, MAT.knottyPine, 4.12, 0.16, 7.3, upperFloorGroup, null, false);
+    box(3.25, 0.72, 0.18, MAT.knottyPine, 2.57, 0.16, 11.05, upperFloorGroup, null, false);
+    [0.95, 4.18].forEach(rx => {
+      box(0.22, 0.20, 7.7, MAT.logBeam, rx, 3.35, 7.35, upperFloorGroup, "up_hall");
+      box(0.18, 0.16, 7.7, MAT.logBeam, rx, 0.75, 7.35, upperFloorGroup, "up_hall");
+      box(0.32, 3.2, 0.32, MAT.logBeam, rx, 2.0, 3.55, upperFloorGroup, "up_hall");
+      box(0.32, 3.2, 0.32, MAT.logBeam, rx, 2.0, 11.15, upperFloorGroup, "up_hall");
+      for (let sz = 4.2; sz <= 10.6; sz += 0.75) {
+        const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 2.5, 6), MAT.logBeam);
+        sp.position.set(rx, 2.05, sz);
+        upperFloorGroup.add(sp);
+      }
+    });
+    box(3.3, 0.20, 0.22, MAT.logBeam, 2.56, 3.35, 11.15, upperFloorGroup, "up_hall");
     addCollider(2, 0.95, 3.5, 0.95, 11.8);
     addCollider(2, 4.2, 3.5, 4.2, 11.8);
 
@@ -2526,11 +2744,12 @@
       windows: [[-4.8, 1.4, 2.8, 6.4, 1, false]]
     });
 
-    // Upstairs Interior Partitions: All 4 Upstairs Doors Are 3.4-3.6ft Wide & Completely Clear of the Stairwell!
+    // Upstairs Interior Partitions: 100% Sealed NW Hallway Corner (X = -5.5..+5.5 at Z = -2.5) + Open Knotty-Pine Doors on All Rooms!
     buildWallAxis("z", -5.5, -5.5, 11.8, [[-1.0, 2.6]], { level: 2, cutH: UWALL_H, fullH: FULL_H2, yBase: 0.5, thick: 0.32, mat: MAT.drywall, cutParent: upperFloorGroup, walkParent: walkUpperEnclosureGroup });
     addOpenPineDoor(-5.65, 0.5, 2.55, -1.56, walkUpperEnclosureGroup);
     buildWallAxis("z", 5.5, -11.8, 11.8, [[-1.0, 2.6]], { level: 2, cutH: UWALL_H, fullH: FULL_H2, yBase: 0.5, thick: 0.32, mat: MAT.drywall, cutParent: upperFloorGroup, walkParent: walkUpperEnclosureGroup });
-    buildWallAxis("x", -2.5, -4.5, 5.5, [[-1.7, 1.7]], { level: 2, cutH: UWALL_H, fullH: FULL_H2, yBase: 0.5, thick: 0.32, mat: MAT.drywall, cutParent: upperFloorGroup, walkParent: walkUpperEnclosureGroup });
+    addOpenPineDoor(5.65, 0.5, -0.95, 1.56, walkUpperEnclosureGroup);
+    buildWallAxis("x", -2.5, -5.5, 5.5, [[-1.7, 1.7]], { level: 2, cutH: UWALL_H, fullH: FULL_H2, yBase: 0.5, thick: 0.32, mat: MAT.drywall, cutParent: upperFloorGroup, walkParent: walkUpperEnclosureGroup });
     addOpenPineDoor(-1.7, 0.5, -2.65, -1.55, walkUpperEnclosureGroup);
     // Walk-In Closet Walls (3.4ft wide doorway directly off Upstairs West Bedroom at Z = -5.5, X = -9.2..-5.8!)
     buildWallAxis("z", -10.3, -11.8, -5.5, [], { level: 2, cutH: UWALL_H, fullH: FULL_H2, yBase: 0.5, thick: 0.32, mat: MAT.drywall, cutParent: upperFloorGroup, walkParent: walkUpperEnclosureGroup });
@@ -2559,19 +2778,30 @@
     addEaveSlope(3.6, 18.8, -9.2, false);  // NE sloped eave in East BR (C4!)
     addEaveSlope(14.8, 13.0, 9.2, true);   // South sloped eave in East BR
     box(41.2, 0.25, 23.6, MAT.ceilingWhite, 0, 8.95, 0, walkUpperEnclosureGroup, null, false);
+    // Exposed Warm Knotty-Pine Vaulted Ridge Beam & Bedroom Ceiling Trim Upstairs (Photos fad90698 & b39ab445!)
+    box(41.0, 0.52, 0.58, MAT.knottyPine, 0, 8.68, 0, walkUpperEnclosureGroup, null, false);
 
-    // --- Upstairs Furniture & Fixtures ---
+    // --- Upstairs Furniture, Romantic Bedside Lamps & Vanity Sconces ---
     // Walk-In Closet Cherry Drawer Tower (C3)
     box(1.6, 5.8, 4.4, MAT.cherryWood, -9.3, 3.4, -8.5, walkUpperEnclosureGroup, null, false);
     box(1.6, 3.9, 4.4, MAT.cherryWood, -9.3, 2.45, -8.5, upperFloorGroup, "up_closet");
-    // Upstairs West Bedroom NW Cherry Dresser + TV under sloped eave (C1 center!)
+    // Upstairs West Bedroom: NW Cherry Dresser + TV + Bedside Nightstand & Warm Lamp + Twin Nook Reading Sconce!
     box(3.2, 2.5, 1.6, MAT.cherryWood, -18.4, 1.75, -10.2, upperFloorGroup, "up_west");
     box(2.4, 1.5, 0.14, MAT.iron, -18.4, 3.6, -10.2, upperFloorGroup, "up_west");
-    // Upstairs East 2-Queen Bedroom: Shared Nightstand + Lamp (C5), Dark/White North Dormer Dresser (C4/C6), White Loveseat + Ottoman + Mirror (C6/C7)!
+    box(1.5, 1.65, 1.5, MAT.cherryWood, -9.5, 1.32, -10.3, upperFloorGroup, "up_west");
+    const wLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.48, 0.65, 12), MAT.warmBulb);
+    wLamp.position.set(-9.5, 2.52, -10.3); upperFloorGroup.add(wLamp);
+    addWarmHalo(-9.5, 2.55, -10.3, 2.5, upperFloorGroup, 0xffc680, 0.66);
+    const nookSconce = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), MAT.warmBulb);
+    nookSconce.position.set(-10.8, 5.1, 11.2); walkUpperEnclosureGroup.add(nookSconce);
+    addWarmHalo(-10.8, 5.05, 11.1, 2.2, walkUpperEnclosureGroup, 0xffcc8c, 0.56);
+
+    // Upstairs East 2-Queen Bedroom: Shared Nightstand + Romantic Glowing Lamp, Dresser, White Loveseat + Ottoman + Mirror!
     box(1.7, 1.8, 1.9, MAT.darkWood, 19.3, 1.4, -1.7, upperFloorGroup, "up_east");
     const eLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 0.7, 12), MAT.warmBulb);
     eLamp.position.set(19.3, 2.8, -1.7);
     upperFloorGroup.add(eLamp);
+    addWarmHalo(19.3, 2.85, -1.7, 3.1, upperFloorGroup, 0xffc278, 0.72);
     // Dark/White Dresser under North Dormer (C4 left, C6 center!)
     box(3.4, 3.3, 1.6, MAT.couchWhite, 14.5, 2.15, -10.3, upperFloorGroup, "up_east");
     [1.1, 1.8, 2.5, 3.2].forEach(dy => box(3.0, 0.52, 0.12, MAT.darkWood, 14.5, dy, -9.46, upperFloorGroup, "up_east"));
@@ -2592,11 +2822,18 @@
       const vSink = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.52, 0.38, 18), MAT.whiteAppliance);
       vSink.position.set(-3.3, 3.5, sz);
       upperFloorGroup.add(vSink);
+      box(0.32, 0.58, 0.10, MAT.iron, -3.95, 3.72, sz, upperFloorGroup, "up_bath", false); // Bronze vessel faucet!
       const ovMirror = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 0.08, 20), MAT.mirror);
       ovMirror.rotation.z = Math.PI / 2;
       ovMirror.scale.set(1.25, 1, 0.85);
       ovMirror.position.set(-4.26, 5.3, sz);
       walkUpperEnclosureGroup.add(ovMirror);
+      box(0.16, 0.14, 1.4, MAT.iron, -4.18, 6.72, sz, walkUpperEnclosureGroup, null, false);
+      [-0.45, 0, 0.45].forEach(bo => {
+        const ub = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), MAT.warmBulb);
+        ub.position.set(-4.06, 6.60, sz + bo); walkUpperEnclosureGroup.add(ub);
+      });
+      addWarmHalo(-4.0, 6.58, sz, 2.1, walkUpperEnclosureGroup, 0xffd7a4, 0.55);
     });
     // Full-Height Slate Tile Walk-In Shower Enclosure + Frosted Glass-Block Window (B8, B10, B11!)
     box(4.6, 0.22, 3.8, MAT.slate, -0.8, 0.62, -9.7, upperFloorGroup, "up_bath");
@@ -3733,9 +3970,8 @@
         livFlameMesh.visible = livFireLight.visible = livFireOn;
         showToast(livFireOn ? "Turned on Living Room fireplace glow!" : "Turned off Living Room fireplace");
       } else if (action === "liv_tv") {
-        livTvChannel = (livTvChannel + 1) % TV_CHANNELS.length;
-        livTvScreenMesh.material.color.setHex(TV_CHANNELS[livTvChannel].color);
-        showToast(`Living Room TV: ${TV_CHANNELS[livTvChannel].name}`);
+        toggleTvDock(true);
+        showToast("Playing Mita Gami @ Live from Home on the TV!");
       } else if (action === "spa_jets") {
         spaJetsOn = !spaJetsOn;
         spaSteamGroup.visible = spaJetsOn;
@@ -3957,26 +4193,122 @@
         sunLight.color.setHex(0x7ca2cf);
         sunLight.intensity = 0.24;
         starField.visible = true;
-        porchGlowLight.intensity = 1.05;
-        groveGlowLight.intensity = 1.10;
-        spaGlowLight.intensity = spaJetsOn ? 0.95 : 0.0;
-        interiorPointLights.forEach(pl => { pl.intensity = pl.userData.dayInt * 1.68; pl.color.setHex(0xffcf94); });
+        porchGlowLight.intensity = 1.25;
+        groveGlowLight.intensity = 1.25;
+        spaGlowLight.intensity = spaJetsOn ? 1.15 : 0.0;
+        // Intimate, romantic candlelit night warmth: dim ceiling self-glow into soft amber shadow so lamps, chandeliers & fireplaces cast lush golden pools!
+        MAT.ceilingWhite.emissive.setHex(0x4a3522);
+        MAT.ceilingWhite.emissiveIntensity = 0.14;
+        hemiLight.color.setHex(0x3b3552);
+        hemiLight.groundColor.setHex(0x2b1b10);
+        hemiLight.intensity = 0.24;
+        sunLight.intensity = 0.14;
+        interiorPointLights.forEach(pl => {
+          pl.intensity = pl.userData.dayInt * 1.18;
+          pl.color.setHex(0xffad5c);
+        });
+        glowSprites.forEach(g => { g.sp.material.opacity = Math.min(0.96, g.baseOp * 1.38); });
         steamMat.opacity = 0.38;
       } else {
         scene.background = new THREE.Color(tc.bg);
         scene.fog = new THREE.Fog(tc.bg, 130, 260);
-        hemiLight.color.setHex(0xfff8ed);
-        hemiLight.groundColor.setHex(0x5d5343);
-        hemiLight.intensity = 0.84;
-        sunLight.color.setHex(0xfff1d8);
-        sunLight.intensity = 0.92;
+        MAT.ceilingWhite.emissive.setHex(0xdcd4c6);
+        MAT.ceilingWhite.emissiveIntensity = 0.30;
+        hemiLight.color.setHex(0xfff4e2);
+        hemiLight.groundColor.setHex(0x78563a);
+        hemiLight.intensity = 0.72;
+        sunLight.color.setHex(0xffebd0);
+        sunLight.intensity = 0.86;
         starField.visible = false;
         porchGlowLight.intensity = 0.0;
         groveGlowLight.intensity = 0.0;
-        spaGlowLight.intensity = spaJetsOn ? 0.25 : 0.0;
-        interiorPointLights.forEach(pl => { pl.intensity = pl.userData.dayInt; pl.color.setHex(0xffe9cf); });
+        spaGlowLight.intensity = spaJetsOn ? 0.28 : 0.0;
+        interiorPointLights.forEach(pl => {
+          pl.intensity = pl.userData.dayInt;
+          pl.color.setHex(pl.userData.baseCol);
+        });
+        glowSprites.forEach(g => { g.sp.material.opacity = g.baseOp; });
         steamMat.opacity = 0.22;
       }
+    }
+
+    // --- 3B. LIVE YOUTUBE TV ENGINE ("Mita Gami @ Live from Home 2021" — vh8VPeExS3c) ---
+    const YT_VIDEO_ID = "vh8VPeExS3c";
+    const YT_ORIGIN = window.location.origin && window.location.origin !== "null" ? `&origin=${encodeURIComponent(window.location.origin)}` : "";
+    const YT_WALL_URL = `https://www.youtube.com/embed/${YT_VIDEO_ID}?autoplay=1&mute=1&playsinline=1&controls=1&rel=0${YT_ORIGIN}`;
+    const YT_DOCK_URL = `https://www.youtube.com/embed/${YT_VIDEO_ID}?autoplay=1&playsinline=1&controls=1&rel=0${YT_ORIGIN}`;
+    const tvStageEl = document.getElementById("tv-css3d-stage");
+    const tvCamEl = document.getElementById("tv-css3d-camera");
+    const tvPanelEl = document.getElementById("tv-3d-panel");
+    const ytWallIframe = document.getElementById("yt-wall-iframe");
+    const tvDockEl = document.getElementById("tv-pip-dock");
+    const ytDockIframe = document.getElementById("yt-dock-iframe");
+    const btnTvDock = document.getElementById("btn-tv-dock");
+    let tvDockOpen = false;
+    let wallYtMounted = false;
+
+    const tvAnchor = new THREE.Object3D();
+    tvAnchor.position.set(-15.6, 3.55, -12.63);
+    tvAnchor.updateMatrixWorld(true);
+    const epsCss = n => (Math.abs(n) < 1e-10 ? 0 : n);
+
+    function toggleTvDock(forceState) {
+      tvDockOpen = typeof forceState === "boolean" ? forceState : !tvDockOpen;
+      btnTvDock.classList.toggle("active", tvDockOpen);
+      tvDockEl.classList.toggle("hidden", !tvDockOpen);
+      if (tvDockOpen) {
+        if (wallYtMounted) { ytWallIframe.src = ""; wallYtMounted = false; }
+        tvStageEl.classList.add("hidden");
+        if (ytDockIframe.src !== YT_DOCK_URL) ytDockIframe.src = YT_DOCK_URL;
+      } else {
+        ytDockIframe.src = "";
+      }
+    }
+    btnTvDock.addEventListener("click", () => toggleTvDock());
+    document.getElementById("btn-tv-dock-close").addEventListener("click", () => toggleTvDock(false));
+    document.getElementById("btn-tv-goto").addEventListener("click", () => {
+      if (appMode !== "explore") setAppMode("explore");
+      fpv.x = -15.6; fpv.z = -4.2; fpv.floor = 1; fpv.y = fpv.goalY = 0.24;
+      fpv.yaw = 0.0; fpv.pitch = -0.02;
+      detectFPVRoom();
+    });
+
+    function updateCss3dTv() {
+      // Mount 3D wall iframe cleanly over http(s) whenever inside the Living Room looking toward the North TV wall!
+      const isHttp = window.location.protocol.startsWith("http");
+      const inLivingView = isHttp && !tvDockOpen && !testCamOverride && appMode === "explore"
+        && fpv.floor === 1 && fpv.x < -8.8 && fpv.x > -21.9 && fpv.z < 3.0 && fpv.z > -12.1;
+
+      if (!inLivingView) {
+        if (!tvStageEl.classList.contains("hidden")) tvStageEl.classList.add("hidden");
+        return;
+      }
+      const camDir = new THREE.Vector3();
+      camera.getWorldDirection(camDir);
+      const toTv = new THREE.Vector3(-15.6 - camera.position.x, 3.55 - camera.position.y, -12.63 - camera.position.z).normalize();
+      if (camDir.dot(toTv) < 0.22) {
+        tvStageEl.classList.add("hidden");
+        return;
+      }
+
+      if (!wallYtMounted) {
+        ytWallIframe.src = YT_WALL_URL;
+        wallYtMounted = true;
+      }
+      tvStageEl.classList.remove("hidden");
+
+      const h = Math.max(1, viewport.clientHeight);
+      const fovPx = (0.5 / Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5))) * h;
+      tvStageEl.style.perspective = `${fovPx}px`;
+
+      camera.updateMatrixWorld();
+      const m = camera.matrixWorldInverse.elements;
+      const camMat = `matrix3d(${epsCss(m[0])},${epsCss(-m[1])},${epsCss(m[2])},${epsCss(m[3])},${epsCss(m[4])},${epsCss(-m[5])},${epsCss(m[6])},${epsCss(m[7])},${epsCss(m[8])},${epsCss(-m[9])},${epsCss(m[10])},${epsCss(m[11])},${epsCss(m[12])},${epsCss(-m[13])},${epsCss(m[14])},${epsCss(m[15])})`;
+      tvCamEl.style.transform = `translateZ(${fovPx}px) ${camMat}`;
+
+      const e = tvAnchor.matrixWorld.elements;
+      const objMat = `matrix3d(${epsCss(e[0] * 0.01)},${epsCss(e[1] * 0.01)},${epsCss(e[2] * 0.01)},${epsCss(e[3])},${epsCss(-e[4] * 0.01)},${epsCss(-e[5] * 0.01)},${epsCss(-e[6] * 0.01)},${epsCss(-e[7])},${epsCss(e[8] * 0.01)},${epsCss(e[9] * 0.01)},${epsCss(e[10] * 0.01)},${epsCss(e[11])},${epsCss(e[12])},${epsCss(e[13])},${epsCss(e[14])},${epsCss(e[15])})`;
+      tvPanelEl.style.transform = `translate(-50%, -50%) ${objMat}`;
     }
 
     document.getElementById("btn-night").addEventListener("click", e => {
@@ -4175,6 +4507,8 @@
       fireLight.intensity = campFireOn ? ((nightMode ? 1.85 : 1.15) + Math.sin(t * 4.2) * 0.22) : 0;
       dinFireLight.intensity = dinFireOn ? ((nightMode ? 1.15 : 0.75) + Math.cos(t * 3.8) * 0.14) : 0;
       livFireLight.intensity = livFireOn ? ((nightMode ? 0.95 : 0.62) + Math.sin(t * 3.3) * 0.10) : 0;
+      tvGlowLight.intensity = (nightMode ? 0.72 : 0.45) + Math.sin(t * 2.7) * 0.08;
+      drawTvFrame(t);
 
       // Rising Hot Tub Steam Puffs
       if (spaJetsOn) {
@@ -4330,6 +4664,7 @@
 
       updateTreeTransparency(dt);
       renderer.render(scene, camera);
+      updateCss3dTv();
       updateLabels3D();
       updateExtraOverlays3D();
       drawMinimap();
