@@ -4530,9 +4530,10 @@
     });
 
     const tvAnchor = new THREE.Object3D();
-    tvAnchor.position.set(-15.6, 3.55, -12.63);
+    tvAnchor.position.set(-15.6, 3.55, -12.715); // Flush inside the 3D TV bezel face (z = -12.72)!
     tvAnchor.updateMatrixWorld(true);
     const epsCss = n => (Math.abs(n) < 1e-10 ? 0 : n);
+    const CSS3D_UNIT = 100; // 100px = 1ft avoids Chromium HiDPI cross-origin iframe quantization drift at 0.01 micro-scale!
 
     function toggleTvDock(forceState) {
       tvDockOpen = typeof forceState === "boolean" ? forceState : !tvDockOpen;
@@ -4563,6 +4564,7 @@
         && fpv.floor === 1 && fpv.x < -8.8 && fpv.x > -21.9 && fpv.z < 3.0 && fpv.z > -12.1;
 
       if (!inLivingView) {
+        livTvScreenMesh.visible = true;
         if (!tvStageEl.classList.contains("hidden")) {
           tvStageEl.classList.add("hidden");
           tvWallBarEl.classList.add("hidden");
@@ -4572,8 +4574,9 @@
       }
       const camDir = new THREE.Vector3();
       camera.getWorldDirection(camDir);
-      const toTv = new THREE.Vector3(-15.6 - camera.position.x, 3.55 - camera.position.y, -12.63 - camera.position.z).normalize();
+      const toTv = new THREE.Vector3(-15.6 - camera.position.x, 3.55 - camera.position.y, -12.715 - camera.position.z).normalize();
       if (camDir.dot(toTv) < 0.22) {
+        livTvScreenMesh.visible = true;
         tvStageEl.classList.add("hidden");
         tvWallBarEl.classList.add("hidden");
         return;
@@ -4581,6 +4584,8 @@
 
       if (!wallPlayer) mountWallPlayer();
       else if (wallPlayerReady) { try { if (wallPlayer.getPlayerState() !== 1) wallPlayer.playVideo(); } catch (_) {} }
+      // Hide the WebGL fallback placeholder texture while the live CSS3D YouTube screen is active so there is only 1 screen!
+      livTvScreenMesh.visible = false;
       tvStageEl.classList.remove("hidden");
       tvWallBarEl.classList.remove("hidden");
 
@@ -4590,11 +4595,11 @@
 
       camera.updateMatrixWorld();
       const m = camera.matrixWorldInverse.elements;
-      const camMat = `matrix3d(${epsCss(m[0])},${epsCss(-m[1])},${epsCss(m[2])},${epsCss(m[3])},${epsCss(m[4])},${epsCss(-m[5])},${epsCss(m[6])},${epsCss(m[7])},${epsCss(m[8])},${epsCss(-m[9])},${epsCss(m[10])},${epsCss(m[11])},${epsCss(m[12])},${epsCss(-m[13])},${epsCss(m[14])},${epsCss(m[15])})`;
+      const camMat = `matrix3d(${epsCss(m[0])},${epsCss(-m[1])},${epsCss(m[2])},${epsCss(m[3])},${epsCss(m[4])},${epsCss(-m[5])},${epsCss(m[6])},${epsCss(m[7])},${epsCss(m[8])},${epsCss(-m[9])},${epsCss(m[10])},${epsCss(m[11])},${epsCss(m[12] * CSS3D_UNIT)},${epsCss(-m[13] * CSS3D_UNIT)},${epsCss(m[14] * CSS3D_UNIT)},${epsCss(m[15])})`;
       tvCamEl.style.transform = `translateZ(${fovPx}px) ${camMat}`;
 
       const e = tvAnchor.matrixWorld.elements;
-      const objMat = `matrix3d(${epsCss(e[0] * 0.01)},${epsCss(e[1] * 0.01)},${epsCss(e[2] * 0.01)},${epsCss(e[3])},${epsCss(-e[4] * 0.01)},${epsCss(-e[5] * 0.01)},${epsCss(-e[6] * 0.01)},${epsCss(-e[7])},${epsCss(e[8] * 0.01)},${epsCss(e[9] * 0.01)},${epsCss(e[10] * 0.01)},${epsCss(e[11])},${epsCss(e[12])},${epsCss(e[13])},${epsCss(e[14])},${epsCss(e[15])})`;
+      const objMat = `matrix3d(${epsCss(e[0])},${epsCss(e[1])},${epsCss(e[2])},${epsCss(e[3])},${epsCss(-e[4])},${epsCss(-e[5])},${epsCss(-e[6])},${epsCss(-e[7])},${epsCss(e[8])},${epsCss(e[9])},${epsCss(e[10])},${epsCss(e[11])},${epsCss(e[12] * CSS3D_UNIT)},${epsCss(e[13] * CSS3D_UNIT)},${epsCss(e[14] * CSS3D_UNIT)},${epsCss(e[15])})`;
       tvPanelEl.style.transform = `translate(-50%, -50%) ${objMat}`;
     }
 
