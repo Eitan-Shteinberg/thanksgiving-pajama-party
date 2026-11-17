@@ -181,6 +181,15 @@
       font-size: 12px; font-weight: 700; color: var(--cp-text); box-shadow: var(--cp-shadow);
       max-width: calc(100% - 168px); flex-wrap: wrap;
     }
+    .desktop-only { display: inline; }
+    .mobile-only { display: none; }
+    @media (pointer: coarse) {
+      .desktop-only { display: none !important; }
+      .mobile-only { display: inline !important; }
+    }
+    @media (max-width: 1040px) {
+      #tv-wall-status { display: none; }
+    }
     .fpv-loc-label { color: var(--cp-accent); }
     .speed-pill {
       appearance: none; border: 1px solid var(--cp-border-strong); background: var(--cp-surface-soft);
@@ -460,8 +469,11 @@
       }
       .brand-wrap { grid-area: brand; }
       .brand-sub { display: none; }
-      .brand-title { font-size: 13.5px; max-width: 100%; }
-      .top-quick-actions { grid-area: actions; }
+      .brand-title { font-size: 13px; letter-spacing: -0.01em; max-width: 100%; }
+      .top-quick-actions { grid-area: actions; gap: 4px; }
+      .top-quick-actions .btn { padding: 4px 6px; font-size: 11px; }
+      .desktop-only { display: none !important; }
+      .mobile-only { display: inline !important; }
       .mode-switch { grid-area: modes; display: grid; grid-template-columns: 1fr 1fr; width: 100%; min-width: 0; }
       .mode-btn { font-size: 12px; padding: 6px 6px; text-align: center; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
       .tab-btn { font-size: 11.5px; padding: 5px 4px; }
@@ -484,15 +496,19 @@
       .hud-bottom-left { left: 8px; bottom: 8px; padding: 4px 8px; font-size: 10px; gap: 6px; max-width: calc(100vw - 16px); }
       .hud-controls-desktop { display: none; }
       .room-focus-bar { bottom: 38px; padding: 5px 8px; gap: 5px; max-width: calc(100vw - 16px); }
-      .fpv-badge { left: 8px; bottom: 8px; padding: 5px 8px; gap: 5px; max-width: calc(100vw - 152px); font-size: 11px; }
-      .fpv-coach { bottom: 96px; top: auto; font-size: 10.5px; padding: 3px 9px; max-width: calc(100vw - 16px); overflow: hidden; text-overflow: ellipsis; }
-      .minimap-wrap { top: 48px; left: 6px; padding: 4px; }
-      #minimap-canvas { width: 96px; height: 70px; }
-      .pip-card { top: 48px; right: 6px; width: 108px; padding: 4px; }
-      #pip-img { height: 60px; }
+      .fpv-badge { left: 8px; bottom: 8px; padding: 5px 7px; gap: 4px; max-width: calc(100vw - 148px); font-size: 11px; }
+      .fpv-loc-row { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .fpv-badge .btn-sm, .fpv-badge .speed-pill { padding: 3px 6px; font-size: 10.5px; }
+      .fpv-coach { top: 138px; bottom: auto; font-size: 10.5px; padding: 3px 9px; max-width: calc(100vw - 16px); overflow: hidden; text-overflow: ellipsis; }
+      .tv-floating-bar { top: auto; bottom: 70px; left: 8px; transform: none; padding: 4px 7px; gap: 5px; max-width: calc(100vw - 148px); z-index: 17; }
+      #tv-wall-vol { width: 48px !important; }
+      .minimap-wrap { top: 46px; left: 6px; padding: 4px; }
+      #minimap-canvas { width: 94px; height: 68px; }
+      .pip-card { top: 46px; right: 6px; width: 106px; padding: 4px; }
+      #pip-img { height: 58px; }
       .tv-pip-dock { right: 8px; bottom: 96px; width: 196px; }
       .tv-pip-dock iframe, #yt-dock-slot { height: 110px !important; }
-      .game-hud-pill { bottom: 96px; padding: 5px 8px; font-size: 10.5px; gap: 5px; max-width: calc(100vw - 14px); }
+      .game-hud-pill { top: 138px; bottom: auto; padding: 5px 8px; font-size: 10.5px; gap: 5px; max-width: calc(100vw - 14px); }
       .pin-label { font-size: 9.5px; padding: 2px 5px; border-radius: 6px; }
       .pin-label .pin-tag { font-size: 9px; padding: 0 4px; }
       .fpv-pad { grid-template-columns: repeat(3, 41px); grid-template-rows: repeat(2, 38px); gap: 4px; right: 8px; bottom: 8px; }
@@ -515,14 +531,14 @@
       </div>
 
       <div class="mode-switch" role="tablist" aria-label="View Mode">
-        <button class="mode-btn active" id="mode-planning">Plan Beds</button>
-        <button class="mode-btn" id="mode-explore">Walk Inside 3D</button>
+        <button class="mode-btn" id="mode-planning">Plan Beds</button>
+        <button class="mode-btn active" id="mode-explore">Walk Inside 3D</button>
       </div>
 
       <div class="top-quick-actions">
         <button class="btn" id="btn-tv-dock" title="Watch Mita Gami @ Live from Home on the Living Room TV!">📺 TV</button>
         <button class="btn" id="btn-tour" title="30-second hands-free guided 3D cabin tour">▶ Tour</button>
-        <button class="btn" id="btn-night" title="Toggle sunny golden hour vs. romantic starry night">🌙 Night</button>
+        <button class="btn active" id="btn-night" title="Toggle sunny golden hour vs. romantic starry night">☀️ Day</button>
         <button class="btn btn-outline-accent" id="btn-top-share" title="Copy sleeping plan &amp; shareable link">Share</button>
         <button class="btn" id="btn-theme" title="Switch light or dark UI theme">◐</button>
       </div>
@@ -630,12 +646,12 @@
         </div>
 
         <!-- WALK INSIDE HUD BADGE, COACH HINT & 6-WAY THUMB PAD -->
-        <div class="fpv-coach hidden" id="fpv-coach">Drag to look • Arrows / WASD or tap floor to walk • Hold <span class="kbd-tag">Shift</span> to walk faster</div>
+        <div class="fpv-coach hidden" id="fpv-coach"><span class="desktop-only">Drag to look • Arrows / WASD or tap floor to walk • Hold <span class="kbd-tag">Shift</span> to walk faster</span><span class="mobile-only">Drag to look • Tap floor to walk • Double-tap or ⚡ Tap 2× to go fast</span></div>
         <div class="fpv-badge hidden" id="fpv-badge">
-          <span>In: <span class="fpv-loc-label" id="fpv-loc-text">Front Porch &amp; Fire Pit</span></span>
-          <button type="button" class="speed-pill" id="btn-fast-walk" title="Hold Shift (or click to lock) for 2x fast walking">⚡ <span class="kbd-tag">Shift</span> Fast</button>
-          <button class="btn btn-sm" id="btn-fpv-photo">Real Photo</button>
-          <button class="btn btn-sm btn-outline-accent" id="btn-fpv-map">Plan Map</button>
+          <span class="fpv-loc-row">In: <span class="fpv-loc-label" id="fpv-loc-text">Front Porch &amp; Fire Pit</span></span>
+          <button type="button" class="speed-pill" id="btn-fast-walk" title="Tap to toggle 2x fast walk (or hold Shift on keyboard)">⚡ <span class="desktop-only"><span class="kbd-tag">Shift</span> Fast</span><span class="mobile-only">Tap 2×</span></button>
+          <button class="btn btn-sm" id="btn-fpv-photo"><span class="desktop-only">Real </span>Photo</button>
+          <button class="btn btn-sm btn-outline-accent" id="btn-fpv-map">Plan<span class="desktop-only"> Map</span></button>
         </div>
         <div class="fpv-reticle hidden" id="fpv-reticle"></div>
         <div class="fpv-pad hidden" id="fpv-pad">
@@ -784,7 +800,8 @@
               <span class="pill" id="fpv-floor-pill">Downstairs</span>
             </div>
             <p style="font-size:11px; color:var(--cp-text-muted); margin-bottom:8px;">
-              Drag to look around, use arrows / WASD (hold <strong>Shift</strong> or tap <strong>⚡ Fast</strong> to walk 2× faster), or tap any floor spot—including up the log stairs:
+              <span class="desktop-only">Drag to look around, use arrows / WASD (hold <strong>Shift</strong> or tap <strong>⚡ Fast</strong> for 2× speed), or tap any floor spot—including up the log stairs:</span>
+              <span class="mobile-only">Drag to look around, tap any floor spot (double-tap floor or tap <strong>⚡ Tap 2×</strong> for 2× speed), or jump right to a room:</span>
             </p>
             <div class="teleport-grid">
               <button class="btn" data-spawn="front_yard">Front Yard</button>
@@ -3070,22 +3087,30 @@
     }
 
     let fastWalkLocked = false;
+    let lastFloorTapTime = 0;
+    const isTouchOrMobileUI = () => window.matchMedia("(max-width: 820px), (pointer: coarse)").matches;
     function isFastWalkActive() {
-      return fastWalkLocked || keysDown.has("ShiftLeft") || keysDown.has("ShiftRight");
+      return fastWalkLocked || Boolean(fpvWalkGoal && fpvWalkGoal.sprint) || keysDown.has("ShiftLeft") || keysDown.has("ShiftRight");
     }
     function syncFastWalkUI() {
       const btn = document.getElementById("btn-fast-walk");
       if (!btn) return;
       const on = isFastWalkActive();
       btn.classList.toggle("active", on);
-      btn.innerHTML = on
-        ? `⚡ <span class="kbd-tag">Shift</span> Fast 2×`
-        : `⚡ <span class="kbd-tag">Shift</span> Fast`;
+      if (isTouchOrMobileUI()) {
+        btn.innerHTML = on ? `⚡ 2× ON` : `⚡ Tap 2×`;
+      } else {
+        btn.innerHTML = on
+          ? `⚡ <span class="kbd-tag">Shift</span> Fast 2×`
+          : `⚡ <span class="kbd-tag">Shift</span> Fast`;
+      }
     }
     document.getElementById("btn-fast-walk").addEventListener("click", () => {
       fastWalkLocked = !fastWalkLocked;
       syncFastWalkUI();
-      showToast(fastWalkLocked ? "Fast walk (2×) locked ON! (Or hold Shift anytime)" : "Normal strolling speed");
+      showToast(fastWalkLocked
+        ? (isTouchOrMobileUI() ? "Fast walk (2×) ON — tap again for normal speed" : "Fast walk (2×) locked ON! (Or hold Shift anytime)")
+        : "Normal strolling speed");
       viewport.focus({ preventScroll: true });
     });
 
@@ -3136,12 +3161,18 @@
         const dx = fpvWalkGoal.x - fpv.x, dz = fpvWalkGoal.z - fpv.z;
         const dist = Math.hypot(dx, dz);
         if (dist < 0.35) {
+          const wasSprint = Boolean(fpvWalkGoal.sprint);
           fpvWalkGoal = null;
+          if (wasSprint) syncFastWalkUI();
         } else {
           const prevX = fpv.x, prevZ = fpv.z;
           const step = Math.min(dist, (sprinting ? 10.2 : 4.8) * dt);
           stepFPVToward(fpv.x + (dx / dist) * step, fpv.z + (dz / dist) * step);
-          if (Math.hypot(fpv.x - prevX, fpv.z - prevZ) < step * 0.15) fpvWalkGoal = null; // Stop cleanly if against a wall
+          if (Math.hypot(fpv.x - prevX, fpv.z - prevZ) < step * 0.15) {
+            const wasSprint = Boolean(fpvWalkGoal.sprint);
+            fpvWalkGoal = null; // Stop cleanly if against a wall
+            if (wasSprint) syncFastWalkUI();
+          }
         }
       }
 
@@ -3355,7 +3386,11 @@
             const hits = raycaster.intersectObjects([forestBase, ...walkFloors], false);
             if (hits.length > 0 && hits[0].point.y < fpv.y + 3.4 && hits[0].point.y > fpv.y - 3.4) {
               dismissFPVCoach();
-              fpvWalkGoal = { x: hits[0].point.x, z: hits[0].point.z, y: hits[0].point.y };
+              const nowTap = performance.now();
+              const isDblTap = (nowTap - lastFloorTapTime) < 380;
+              lastFloorTapTime = nowTap;
+              fpvWalkGoal = { x: hits[0].point.x, z: hits[0].point.z, y: hits[0].point.y, sprint: isDblTap };
+              syncFastWalkUI();
             }
           }
         }
@@ -3518,6 +3553,7 @@
         explodedGuidesGroup.visible = false;
         if (window.innerWidth <= 820) setSheetCollapsed(true);
         else if (document.querySelector(".tab-btn.active")?.dataset.tab === "planner") switchTab("inspector");
+        syncFastWalkUI();
         fpv.currentRoom = "";
         detectFPVRoom();
         if (typeof syncWalkOverlays === "function") syncWalkOverlays();
@@ -3535,7 +3571,8 @@
         walkMainEnclosureGroup.visible = false;
         walkUpperEnclosureGroup.visible = false;
         upperExteriorCutawayGroup.visible = true;
-        if (window.innerWidth > 820 || !workspaceEl.classList.contains("sheet-collapsed")) switchTab("planner");
+        switchTab("planner");
+        if (window.innerWidth <= 820) setSheetCollapsed(false);
         setViewMode(currentView, false);
         updateFocusBar();
         if (typeof syncWalkOverlays === "function") syncWalkOverlays();
@@ -3990,7 +4027,7 @@
     document.getElementById("btn-top-share").addEventListener("click", copyShareLink);
 
     // ==================== 7B. NEXT-LEVEL GAME & UX FEATURES (NIGHT MODE, INTERACTIVE PROPS, KIDS HUNT, NAP SOUND, MINIMAP, PIP & AUTO-TOUR) ====================
-    let nightMode = false;
+    let nightMode = true; // Cozy Starry Thanksgiving Night Mode ON by default!
     let campFireOn = true, dinFireOn = true, livFireOn = true, spaJetsOn = true, livTvChannel = 0;
     let soundSimMode = false;
     let huntMode = false;
@@ -4428,10 +4465,11 @@
       tvVolRange.value = String(tvVolume);
       tvWallVol.value = String(tvVolume);
       const effMute = tvUserMuted || tvVolume === 0;
+      const compactMob = isTouchOrMobileUI();
       btnTvMuteTog.textContent = adActive ? "🔇 Ad" : `${effMute ? "🔇" : "🔊"} ${tvVolume}%`;
       tvDockTitle.textContent = adActive ? "🔇 Ad Muted" : "📺 Mita Gami";
       btnWallMute.textContent = (!wallSoundOn || effMute)
-        ? `🔇 Unmute TV (${tvVolume}%)`
+        ? (compactMob ? `🔇 TV ${tvVolume}%` : `🔇 Unmute TV (${tvVolume}%)`)
         : (adActive ? "🔇 Ad Muted" : `🔊 TV: ${tvVolume}%`);
       tvWallStatus.textContent = adActive ? "Commercial muted!" : "Ads auto-muted";
     }
@@ -4587,7 +4625,10 @@
       // Hide the WebGL fallback placeholder texture while the live CSS3D YouTube screen is active so there is only 1 screen!
       livTvScreenMesh.visible = false;
       tvStageEl.classList.remove("hidden");
-      tvWallBarEl.classList.remove("hidden");
+      if (tvWallBarEl.classList.contains("hidden")) {
+        syncTvUiLabels();
+        tvWallBarEl.classList.remove("hidden");
+      }
 
       const h = Math.max(1, viewport.clientHeight);
       const fovPx = (0.5 / Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5))) * h;
@@ -4770,19 +4811,20 @@
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      syncFastWalkUI();
     }
     window.addEventListener("resize", resize);
 
-    walkMainEnclosureGroup.visible = false;
+    walkMainEnclosureGroup.visible = true;
     walkUpperEnclosureGroup.visible = false;
-    upperFloorGroup.position.y = 21.0;
+    upperFloorGroup.position.y = 9.8;
     syncSceneTheme();
     resize();
     renderBedPlanner();
     updateBedColorsAndUI();
-    populateInspector("up_west");
+    populateInspector("porch");
     spawnFPV("front_yard");
-    setAppMode("planning");
+    setAppMode("explore");
 
     let t = 0;
     let lastFrameTime = performance.now();
