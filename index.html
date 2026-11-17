@@ -182,6 +182,20 @@
       max-width: calc(100% - 168px); flex-wrap: wrap;
     }
     .fpv-loc-label { color: var(--cp-accent); }
+    .speed-pill {
+      appearance: none; border: 1px solid var(--cp-border-strong); background: var(--cp-surface-soft);
+      color: var(--cp-text-muted); font-family: inherit; font-size: 11px; font-weight: 700;
+      padding: 4px 8px; border-radius: 8px; cursor: pointer; white-space: nowrap;
+      transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+    }
+    .speed-pill:hover { color: var(--cp-text); border-color: var(--cp-accent); }
+    .speed-pill.active { background: var(--cp-accent); border-color: var(--cp-accent); color: var(--cp-accent-fg); }
+    .kbd-tag {
+      display: inline-block; padding: 0 4px; border-radius: 4px; font-size: 10px;
+      border: 1px solid var(--cp-border-strong); background: var(--cp-bg-elevated); margin: 0 2px;
+      font-family: Consolas, "Courier New", Courier, monospace;
+    }
+    .speed-pill.active .kbd-tag { background: var(--cp-accent-hover); border-color: var(--cp-accent-fg); color: var(--cp-accent-fg); }
     .fpv-coach {
       position: absolute; bottom: 98px; left: 50%; transform: translateX(-50%); z-index: 15;
       background: var(--cp-panel-strong); border: 1px solid var(--cp-border);
@@ -610,9 +624,10 @@
         </div>
 
         <!-- WALK INSIDE HUD BADGE, COACH HINT & 6-WAY THUMB PAD -->
-        <div class="fpv-coach hidden" id="fpv-coach">Drag to look around • Tap any floor spot or use arrows to walk</div>
+        <div class="fpv-coach hidden" id="fpv-coach">Drag to look • Arrows / WASD or tap floor to walk • Hold <span class="kbd-tag">Shift</span> to walk faster</div>
         <div class="fpv-badge hidden" id="fpv-badge">
           <span>In: <span class="fpv-loc-label" id="fpv-loc-text">Front Porch &amp; Fire Pit</span></span>
+          <button type="button" class="speed-pill" id="btn-fast-walk" title="Hold Shift (or click to lock) for 2x fast walking">⚡ <span class="kbd-tag">Shift</span> Fast</button>
           <button class="btn btn-sm" id="btn-fpv-photo">Real Photo</button>
           <button class="btn btn-sm btn-outline-accent" id="btn-fpv-map">Plan Map</button>
         </div>
@@ -627,7 +642,7 @@
         </div>
 
         <div class="hud-bottom-left" id="hud-help">
-          <span class="hud-controls-desktop" id="hud-controls-text"><strong>Drag:</strong> Rotate • <strong>Scroll:</strong> Zoom • <strong>Tap Room:</strong> Inspect</span>
+          <span class="hud-controls-desktop" id="hud-controls-text"><strong>Drag:</strong> Rotate • <strong>Scroll:</strong> Zoom • <strong>Arrows (+Shift):</strong> Move</span>
           <span><i class="legend-dot dot-fam1"></i>Elad &amp; Annie</span>
           <span><i class="legend-dot dot-fam2"></i>Eitan &amp; Ola</span>
           <span><i class="legend-dot dot-kids"></i>Kids</span>
@@ -763,7 +778,7 @@
               <span class="pill" id="fpv-floor-pill">Downstairs</span>
             </div>
             <p style="font-size:11px; color:var(--cp-text-muted); margin-bottom:8px;">
-              Drag the 3D screen to look around and use the corner arrows (or keyboard arrows) to walk—including up the L-shaped log stairs:
+              Drag to look around, use arrows / WASD (hold <strong>Shift</strong> or tap <strong>⚡ Fast</strong> to walk 2× faster), or tap any floor spot—including up the log stairs:
             </p>
             <div class="teleport-grid">
               <button class="btn" data-spawn="front_yard">Front Yard</button>
@@ -3041,18 +3056,42 @@
       return [Math.max(-72, Math.min(62, px)), Math.max(-34, Math.min(72, pz))];
     }
 
+    let fastWalkLocked = false;
+    function isFastWalkActive() {
+      return fastWalkLocked || keysDown.has("ShiftLeft") || keysDown.has("ShiftRight");
+    }
+    function syncFastWalkUI() {
+      const btn = document.getElementById("btn-fast-walk");
+      if (!btn) return;
+      const on = isFastWalkActive();
+      btn.classList.toggle("active", on);
+      btn.innerHTML = on
+        ? `⚡ <span class="kbd-tag">Shift</span> Fast 2×`
+        : `⚡ <span class="kbd-tag">Shift</span> Fast`;
+    }
+    document.getElementById("btn-fast-walk").addEventListener("click", () => {
+      fastWalkLocked = !fastWalkLocked;
+      syncFastWalkUI();
+      showToast(fastWalkLocked ? "Fast walk (2×) locked ON! (Or hold Shift anytime)" : "Normal strolling speed");
+      viewport.focus({ preventScroll: true });
+    });
+
     function stepFPVToward(nx, nz) {
-      const inNorthStair = (nx >= 1.05 && nx <= 4.02 && nz >= 3.0 && nz <= 13.4);
-      if (inNorthStair) {
-        if (fpv.floor === 1 && nz < 3.7) fpv.floor = 2;
-        else if (fpv.floor === 2 && nz > 4.0) fpv.floor = 1;
+      const totalDist = Math.hypot(nx - fpv.x, nz - fpv.z);
+      const subSteps = Math.max(1, Math.ceil(totalDist / 0.16));
+      const sx = (nx - fpv.x) / subSteps, sz = (nz - fpv.z) / subSteps;
+      for (let st = 0; st < subSteps; st++) {
+        const tx = fpv.x + sx, tz = fpv.z + sz;
+        const inNorthStair = (tx >= 1.05 && tx <= 4.02 && tz >= 3.0 && tz <= 13.4);
+        if (inNorthStair) {
+          if (fpv.floor === 1 && tz < 3.7) fpv.floor = 2;
+          else if (fpv.floor === 2 && tz > 4.0) fpv.floor = 1;
+        }
+        if (fpv.floor === 1 && !barnDoorOpen && Math.abs(tz - 2.8) < 2.6 && tx < -18.0 && tx > -21.7) {
+          setBarnDoor(true);
+        }
+        [fpv.x, fpv.z] = resolveFPVCollisions(tx, tz, fpv.floor);
       }
-
-      if (fpv.floor === 1 && !barnDoorOpen && Math.abs(nz - 2.8) < 2.6 && nx < -18.0 && nx > -21.7) {
-        setBarnDoor(true);
-      }
-
-      [fpv.x, fpv.z] = resolveFPVCollisions(nx, nz, fpv.floor);
     }
 
     function updateFPVPhysics(dt = 0.016) {
@@ -3064,12 +3103,16 @@
       if (keysDown.has("ArrowLeft")) turnYaw += 1;
       if (keysDown.has("ArrowRight")) turnYaw -= 1;
 
-      if (turnYaw !== 0) fpv.yaw += turnYaw * 1.25 * dt;
+      const sprinting = isFastWalkActive();
+      const walkBaseSpd = sprinting ? 9.8 : 4.5;
+      const turnBaseSpd = sprinting ? 1.75 : 1.25;
+
+      if (turnYaw !== 0) fpv.yaw += turnYaw * turnBaseSpd * dt;
 
       if (moveFwd !== 0 || moveStrafe !== 0) {
         fpvWalkGoal = null;
         const len = Math.hypot(moveFwd, moveStrafe) || 1;
-        const spd = 4.5 * dt;
+        const spd = walkBaseSpd * dt;
         const fx = -Math.sin(fpv.yaw), fz = -Math.cos(fpv.yaw);
         const rx = Math.cos(fpv.yaw), rz = -Math.sin(fpv.yaw);
         stepFPVToward(
@@ -3083,7 +3126,7 @@
           fpvWalkGoal = null;
         } else {
           const prevX = fpv.x, prevZ = fpv.z;
-          const step = Math.min(dist, 4.8 * dt);
+          const step = Math.min(dist, (sprinting ? 10.2 : 4.8) * dt);
           stepFPVToward(fpv.x + (dx / dist) * step, fpv.z + (dz / dist) * step);
           if (Math.hypot(fpv.x - prevX, fpv.z - prevZ) < step * 0.15) fpvWalkGoal = null; // Stop cleanly if against a wall
         }
@@ -3170,13 +3213,24 @@
         return;
       }
       if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+      if (e.code === "ShiftLeft" || e.code === "ShiftRight") {
+        keysDown.add(e.code);
+        syncFastWalkUI();
+        return;
+      }
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyW", "KeyA", "KeyS", "KeyD"].includes(e.code)) {
         e.preventDefault();
         keysDown.add(e.code);
+        if (e.shiftKey) keysDown.add("ShiftLeft");
+        syncFastWalkUI();
       }
     });
-    window.addEventListener("keyup", e => keysDown.delete(e.code));
-    window.addEventListener("blur", () => keysDown.clear());
+    window.addEventListener("keyup", e => {
+      keysDown.delete(e.code);
+      if (!e.shiftKey) { keysDown.delete("ShiftLeft"); keysDown.delete("ShiftRight"); }
+      syncFastWalkUI();
+    });
+    window.addEventListener("blur", () => { keysDown.clear(); syncFastWalkUI(); });
 
     document.querySelectorAll("[data-pad]").forEach(btn => {
       const code = btn.dataset.pad;
@@ -4671,7 +4725,7 @@
         );
       } else {
         if (keysDown.size > 0) {
-          const speed = 18.0 * dt;
+          const speed = (isFastWalkActive() ? 34.0 : 18.0) * dt;
           const forward = new THREE.Vector3(-Math.sin(camCtrl.theta), 0, -Math.cos(camCtrl.theta));
           const right = new THREE.Vector3(Math.cos(camCtrl.theta), 0, -Math.sin(camCtrl.theta));
           if (keysDown.has("ArrowUp") || keysDown.has("KeyW")) camCtrl.goalTarget.addScaledVector(forward, speed);
