@@ -491,7 +491,7 @@
       .pip-card { top: 48px; right: 6px; width: 108px; padding: 4px; }
       #pip-img { height: 60px; }
       .tv-pip-dock { right: 8px; bottom: 96px; width: 196px; }
-      .tv-pip-dock iframe { height: 110px; }
+      .tv-pip-dock iframe, #yt-dock-slot { height: 110px !important; }
       .game-hud-pill { bottom: 96px; padding: 5px 8px; font-size: 10.5px; gap: 5px; max-width: calc(100vw - 14px); }
       .pin-label { font-size: 9.5px; padding: 2px 5px; border-radius: 6px; }
       .pin-label .pin-tag { font-size: 9px; padding: 0 4px; }
@@ -570,22 +570,28 @@
         <div id="tv-css3d-stage" class="hidden">
           <div id="tv-css3d-camera">
             <div id="tv-3d-panel">
-              <iframe id="yt-wall-iframe" src="" title="Mita Gami @ Live from Home 2021" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+              <div id="yt-wall-slot" style="width:100%;height:100%"></div>
             </div>
           </div>
+        </div>
+        <!-- FLOATING WALL-TV AUDIO BAR (SHOWN WHEN VIEWING 3D WALL TV) -->
+        <div class="tv-floating-bar hidden" id="tv-wall-audio-bar">
+          <button type="button" class="btn btn-sm" id="btn-wall-mute" style="padding:2px 7px;font-size:11px">🔇 Unmute TV (15%)</button>
+          <input id="tv-wall-vol" type="range" min="0" max="100" value="15" style="width:64px;accent-color:var(--cp-accent);cursor:pointer" title="Living Room TV Volume" />
+          <span id="tv-wall-status" style="font-size:10.5px;color:var(--cp-text-muted)">Auto-mutes ads</span>
         </div>
         <!-- OPTIONAL POP-OUT / SOUND TV PLAYER DOCK -->
         <div class="tv-pip-dock hidden" id="tv-pip-dock">
           <div class="pip-head">
-            <span>📺 Mita Gami</span>
+            <span id="tv-dock-title">📺 Mita Gami</span>
             <div style="display:flex;gap:4px;align-items:center">
-              <span id="tv-vol-lbl" style="font-size:10px;color:var(--cp-text-muted)">🔊 50%</span>
-              <input id="tv-vol-range" type="range" min="0" max="100" value="50" style="width:52px;accent-color:var(--cp-accent);cursor:pointer" title="TV Volume (50%)" />
+              <button type="button" class="pip-close" id="btn-tv-mute-tog" title="Mute / Unmute TV" style="font-size:11px">🔊 15%</button>
+              <input id="tv-vol-range" type="range" min="0" max="100" value="15" style="width:52px;accent-color:var(--cp-accent);cursor:pointer" title="TV Volume (15%)" />
               <button type="button" class="btn btn-sm" id="btn-tv-goto" style="padding:1px 5px;font-size:10px">Go</button>
               <button type="button" class="pip-close" id="btn-tv-dock-close" title="Minimize to Living Room wall TV">✕</button>
             </div>
           </div>
-          <iframe id="yt-dock-iframe" src="" title="Mita Gami @ Live from Home 2021" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+          <div id="yt-dock-slot" style="width:100%;height:132px;border-radius:6px;overflow:hidden"></div>
         </div>
         <div id="labels-layer"></div>
 
@@ -4298,52 +4304,230 @@
       }
     }
 
-    // --- 3B. LIVE YOUTUBE TV ENGINE ("Mita Gami @ Live from Home 2021" — vh8VPeExS3c, Default 50% Volume!) ---
+    // --- 3B. OFFICIAL YOUTUBE IFRAME API ENGINE ("Mita Gami @ Live from Home 2021" — Gentle 15% Volume + Auto-Mute Commercials!) ---
     const YT_VIDEO_ID = "vh8VPeExS3c";
-    let tvVolume = 50; // Default 50% volume as requested!
-    const YT_ORIGIN = window.location.origin && window.location.origin !== "null" ? `&origin=${encodeURIComponent(window.location.origin)}` : "";
-    const YT_WALL_URL = `https://www.youtube.com/embed/${YT_VIDEO_ID}?autoplay=1&mute=1&playsinline=1&controls=1&rel=0&enablejsapi=1${YT_ORIGIN}`;
-    const YT_DOCK_URL = `https://www.youtube.com/embed/${YT_VIDEO_ID}?autoplay=1&playsinline=1&controls=1&rel=0&enablejsapi=1${YT_ORIGIN}`;
+    let tvVolume = 15; // Gentle 15% cozy background level!
+    let tvUserMuted = false;
+    let wallSoundOn = false;
     const tvStageEl = document.getElementById("tv-css3d-stage");
     const tvCamEl = document.getElementById("tv-css3d-camera");
     const tvPanelEl = document.getElementById("tv-3d-panel");
-    const ytWallIframe = document.getElementById("yt-wall-iframe");
+    const tvWallBarEl = document.getElementById("tv-wall-audio-bar");
+    const btnWallMute = document.getElementById("btn-wall-mute");
+    const tvWallVol = document.getElementById("tv-wall-vol");
+    const tvWallStatus = document.getElementById("tv-wall-status");
     const tvDockEl = document.getElementById("tv-pip-dock");
-    const ytDockIframe = document.getElementById("yt-dock-iframe");
     const btnTvDock = document.getElementById("btn-tv-dock");
     const tvVolRange = document.getElementById("tv-vol-range");
-    const tvVolLbl = document.getElementById("tv-vol-lbl");
+    const btnTvMuteTog = document.getElementById("btn-tv-mute-tog");
+    const tvDockTitle = document.getElementById("tv-dock-title");
     let tvDockOpen = false;
-    let wallYtMounted = false;
+    let ytApiReady = false;
+    let ytApiLoading = false;
+    let wallPlayer = null, wallPlayerReady = false;
+    let dockPlayer = null, dockPlayerReady = false;
+    const wallTrack = { lastCt: -1, stalledTicks: 0, guardMuted: true, passiveWallMute: true };
+    const dockTrack = { lastCt: -1, stalledTicks: 0, guardMuted: true, passiveWallMute: false };
 
-    function sendYtVolume(ifr, vol) {
-      if (!ifr || !ifr.contentWindow) return;
+    // Perceptual volume curve: YouTube's 0-100 scale is linear amplitude, so 15% slider -> 8 (-22 dB cozy cabin lounge), 50% -> 39, 100% -> 100
+    function toPerceptualYtVol(uiPct) {
+      const p = Math.max(0, Math.min(100, Number(uiPct)));
+      if (p <= 0) return 0;
+      return Math.max(1, Math.round(Math.pow(p / 100, 1.36) * 100));
+    }
+
+    function ensureYtApi() {
+      if (window.YT && window.YT.Player) { ytApiReady = true; return; }
+      if (ytApiLoading) return;
+      ytApiLoading = true;
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        ytApiReady = true;
+        if (typeof prev === "function") prev();
+        if (tvDockOpen) mountDockPlayer();
+      };
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(tag);
+    }
+    if (window.location.protocol.startsWith("http")) ensureYtApi();
+
+    function inspectPlayerAdState(player, trk) {
       try {
-        ifr.contentWindow.postMessage(JSON.stringify({ event: "listening" }), "*");
-        ifr.contentWindow.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [vol] }), "*");
-      } catch (_) {}
-    }
-
-    function applyTvVolumeAll(vol) {
-      tvVolume = Math.max(0, Math.min(100, Number(vol)));
-      tvVolRange.value = String(tvVolume);
-      tvVolLbl.textContent = `${tvVolume === 0 ? "🔇" : "🔊"} ${tvVolume}%`;
-      sendYtVolume(ytDockIframe, tvVolume);
-      sendYtVolume(ytWallIframe, tvVolume);
-    }
-
-    [ytDockIframe, ytWallIframe].forEach(ifr => {
-      ifr.addEventListener("load", () => {
-        [150, 500, 1100, 2000, 3200].forEach(ms => setTimeout(() => sendYtVolume(ifr, tvVolume), ms));
-      });
-    });
-    window.addEventListener("message", ev => {
-      if (typeof ev.data === "string" && ev.data.includes("onReady")) {
-        sendYtVolume(ytDockIframe, tvVolume);
-        sendYtVolume(ytWallIframe, tvVolume);
+        const st = typeof player.getPlayerState === "function" ? player.getPlayerState() : -1;
+        const dur = typeof player.getDuration === "function" ? player.getDuration() : 0;
+        const ct = typeof player.getCurrentTime === "function" ? player.getCurrentTime() : 0;
+        const vd = typeof player.getVideoData === "function" ? player.getVideoData() : null;
+        if (st === 0 && typeof player.seekTo === "function") {
+          player.seekTo(0, true);
+          player.playVideo();
+          return { isAd: false, readyMain: true };
+        }
+        // Paused by user (2) or cued (5): not an ad
+        if (st === 2 || st === 5) {
+          trk.stalledTicks = 0;
+          return { isAd: false, readyMain: dur >= 1000 };
+        }
+        // Different video_id or short duration (< 600s vs Mita Gami's 3,326s) = guaranteed commercial!
+        if (vd && vd.video_id && vd.video_id !== YT_VIDEO_ID) return { isAd: true, readyMain: false };
+        if (dur > 0 && dur < 600) return { isAd: true, readyMain: false };
+        // Pre-roll ads report state === -1 (UNSTARTED) and dur === 0 while audio blasts! Keep muted until main 3,326s video reaches PLAYING (1)
+        if (dur < 1000 || st === -1) return { isAd: st === -1, readyMain: false };
+        if (st === 1) {
+          if (Math.abs(ct - trk.lastCt) < 0.005) trk.stalledTicks++;
+          else { trk.stalledTicks = 0; trk.lastCt = ct; }
+          // Mid-roll ads freeze main currentTime for >1s while playing ad audio
+          if (trk.stalledTicks >= 5) return { isAd: true, readyMain: false };
+          return { isAd: false, readyMain: true };
+        }
+        return { isAd: false, readyMain: false };
+      } catch (_) {
+        return { isAd: false, readyMain: false };
       }
+    }
+
+    function enforceSinglePlayerAudio(player, isReady, trk, isWall) {
+      if (!player || !isReady) return false;
+      const targetYtVol = toPerceptualYtVol(tvVolume);
+      const { isAd, readyMain } = inspectPlayerAdState(player, trk);
+      try {
+        // Detect if the user clicked YouTube's built-in unmute button directly inside the 3D Wall TV!
+        if (isWall && !wallSoundOn && trk.passiveWallMute && typeof player.isMuted === "function" && !player.isMuted()) {
+          wallSoundOn = true;
+          tvUserMuted = false;
+          trk.passiveWallMute = false;
+          trk.guardMuted = true; // Force perceptual volume clamp before unmuting!
+        }
+
+        const wantSilent = (isWall && !wallSoundOn) || tvUserMuted || tvVolume <= 0 || isAd || !readyMain;
+        if (wantSilent) {
+          if (typeof player.setVolume === "function") player.setVolume(isAd ? 0 : targetYtVol);
+          if (typeof player.mute === "function" && !player.isMuted()) player.mute();
+          trk.guardMuted = true;
+          if (isWall && !wallSoundOn) trk.passiveWallMute = true;
+        } else {
+          // Confirmed real Mita Gami track playing & user wants sound: clamp perceptual volume BEFORE unmuting!
+          if (typeof player.setVolume === "function" && Math.abs(player.getVolume() - targetYtVol) > 1) {
+            player.setVolume(targetYtVol);
+          }
+          if (trk.guardMuted) {
+            trk.guardMuted = false;
+            if (typeof player.setVolume === "function") player.setVolume(targetYtVol);
+            if (typeof player.unMute === "function" && player.isMuted()) player.unMute();
+          } else if (typeof player.isMuted === "function" && player.isMuted()) {
+            // User clicked mute directly inside YouTube's iframe controls — respect it!
+            if (isWall) wallSoundOn = false;
+            else tvUserMuted = true;
+          }
+        }
+      } catch (_) {}
+      return isAd;
+    }
+
+    function syncTvUiLabels(adActive = false) {
+      tvVolRange.value = String(tvVolume);
+      tvWallVol.value = String(tvVolume);
+      const effMute = tvUserMuted || tvVolume === 0;
+      btnTvMuteTog.textContent = adActive ? "🔇 Ad" : `${effMute ? "🔇" : "🔊"} ${tvVolume}%`;
+      tvDockTitle.textContent = adActive ? "🔇 Ad Muted" : "📺 Mita Gami";
+      btnWallMute.textContent = (!wallSoundOn || effMute)
+        ? `🔇 Unmute TV (${tvVolume}%)`
+        : (adActive ? "🔇 Ad Muted" : `🔊 TV: ${tvVolume}%`);
+      tvWallStatus.textContent = adActive ? "Commercial muted!" : "Ads auto-muted";
+    }
+
+    // 200ms heartbeat guarantees YouTube NEVER blasts commercials or resets to 100% volume!
+    setInterval(() => {
+      let adOn = false;
+      if (tvDockOpen && dockPlayer && dockPlayerReady) {
+        adOn = enforceSinglePlayerAudio(dockPlayer, dockPlayerReady, dockTrack, false);
+      }
+      if (!tvDockOpen && wallPlayer && wallPlayerReady) {
+        const wAd = enforceSinglePlayerAudio(wallPlayer, wallPlayerReady, wallTrack, true);
+        adOn = adOn || wAd;
+      }
+      if (tvDockOpen || !tvStageEl.classList.contains("hidden")) syncTvUiLabels(adOn);
+    }, 200);
+
+    function mountWallPlayer() {
+      ensureYtApi();
+      if (!ytApiReady || wallPlayer) return;
+      wallPlayer = new YT.Player("yt-wall-slot", {
+        width: "100%", height: "100%", videoId: YT_VIDEO_ID,
+        playerVars: { autoplay: 1, mute: 1, playsinline: 1, controls: 1, rel: 0, modestbranding: 1 },
+        events: {
+          onReady: e => {
+            wallPlayerReady = true;
+            wallTrack.guardMuted = true;
+            try { e.target.mute(); e.target.setVolume(toPerceptualYtVol(tvVolume)); e.target.playVideo(); } catch (_) {}
+          },
+          onStateChange: () => enforceSinglePlayerAudio(wallPlayer, wallPlayerReady, wallTrack, true)
+        }
+      });
+    }
+
+    function mountDockPlayer() {
+      ensureYtApi();
+      if (!ytApiReady) return;
+      if (dockPlayer) {
+        if (dockPlayerReady) {
+          dockTrack.guardMuted = true;
+          enforceSinglePlayerAudio(dockPlayer, true, dockTrack, false);
+          try { dockPlayer.playVideo(); } catch (_) {}
+        }
+        return;
+      }
+      dockPlayer = new YT.Player("yt-dock-slot", {
+        width: "100%", height: "100%", videoId: YT_VIDEO_ID,
+        playerVars: { autoplay: 1, mute: 1, playsinline: 1, controls: 1, rel: 0, modestbranding: 1 },
+        events: {
+          onReady: e => {
+            dockPlayerReady = true;
+            dockTrack.guardMuted = true;
+            try { e.target.mute(); e.target.setVolume(toPerceptualYtVol(tvVolume)); e.target.playVideo(); } catch (_) {}
+            setTimeout(() => enforceSinglePlayerAudio(dockPlayer, dockPlayerReady, dockTrack, false), 150);
+          },
+          onStateChange: () => enforceSinglePlayerAudio(dockPlayer, dockPlayerReady, dockTrack, false)
+        }
+      });
+    }
+
+    function setTvVolumeBoth(val) {
+      tvVolume = Math.max(0, Math.min(100, Number(val)));
+      if (tvVolume > 0) {
+        tvUserMuted = false;
+        dockTrack.guardMuted = true;
+        if (!tvDockOpen) { wallSoundOn = true; wallTrack.guardMuted = true; }
+      }
+      enforceSinglePlayerAudio(dockPlayer, dockPlayerReady, dockTrack, false);
+      enforceSinglePlayerAudio(wallPlayer, wallPlayerReady, wallTrack, true);
+      syncTvUiLabels();
+    }
+
+    tvVolRange.addEventListener("input", e => setTvVolumeBoth(e.target.value));
+    tvWallVol.addEventListener("input", e => setTvVolumeBoth(e.target.value));
+    btnTvMuteTog.addEventListener("click", () => {
+      tvUserMuted = !tvUserMuted;
+      if (!tvUserMuted) dockTrack.guardMuted = true;
+      enforceSinglePlayerAudio(dockPlayer, dockPlayerReady, dockTrack, false);
+      syncTvUiLabels();
     });
-    tvVolRange.addEventListener("input", e => applyTvVolumeAll(e.target.value));
+    btnWallMute.addEventListener("click", () => {
+      wallSoundOn = !wallSoundOn;
+      if (wallSoundOn) {
+        tvUserMuted = false;
+        wallTrack.passiveWallMute = false;
+        wallTrack.guardMuted = true;
+      } else {
+        wallTrack.passiveWallMute = false;
+        if (wallPlayer && wallPlayerReady && typeof wallPlayer.mute === "function") {
+          try { wallPlayer.mute(); } catch (_) {}
+        }
+        wallTrack.passiveWallMute = true;
+      }
+      enforceSinglePlayerAudio(wallPlayer, wallPlayerReady, wallTrack, true);
+      syncTvUiLabels();
+    });
 
     const tvAnchor = new THREE.Object3D();
     tvAnchor.position.set(-15.6, 3.55, -12.63);
@@ -4355,11 +4539,13 @@
       btnTvDock.classList.toggle("active", tvDockOpen);
       tvDockEl.classList.toggle("hidden", !tvDockOpen);
       if (tvDockOpen) {
-        if (wallYtMounted) { ytWallIframe.src = ""; wallYtMounted = false; }
+        if (wallPlayer && wallPlayerReady) { try { wallPlayer.pauseVideo(); wallPlayer.mute(); } catch (_) {} }
         tvStageEl.classList.add("hidden");
-        if (ytDockIframe.src !== YT_DOCK_URL) ytDockIframe.src = YT_DOCK_URL;
+        tvWallBarEl.classList.add("hidden");
+        mountDockPlayer();
+        syncTvUiLabels();
       } else {
-        ytDockIframe.src = "";
+        if (dockPlayer && dockPlayerReady) { try { dockPlayer.pauseVideo(); dockPlayer.mute(); } catch (_) {} }
       }
     }
     btnTvDock.addEventListener("click", () => toggleTvDock());
@@ -4372,13 +4558,16 @@
     });
 
     function updateCss3dTv() {
-      // Mount 3D wall iframe cleanly over http(s) whenever inside the Living Room looking toward the North TV wall!
       const isHttp = window.location.protocol.startsWith("http");
       const inLivingView = isHttp && !tvDockOpen && !testCamOverride && appMode === "explore"
         && fpv.floor === 1 && fpv.x < -8.8 && fpv.x > -21.9 && fpv.z < 3.0 && fpv.z > -12.1;
 
       if (!inLivingView) {
-        if (!tvStageEl.classList.contains("hidden")) tvStageEl.classList.add("hidden");
+        if (!tvStageEl.classList.contains("hidden")) {
+          tvStageEl.classList.add("hidden");
+          tvWallBarEl.classList.add("hidden");
+          if (wallPlayer && wallPlayerReady && !wallSoundOn) { try { wallPlayer.mute(); } catch (_) {} }
+        }
         return;
       }
       const camDir = new THREE.Vector3();
@@ -4386,14 +4575,14 @@
       const toTv = new THREE.Vector3(-15.6 - camera.position.x, 3.55 - camera.position.y, -12.63 - camera.position.z).normalize();
       if (camDir.dot(toTv) < 0.22) {
         tvStageEl.classList.add("hidden");
+        tvWallBarEl.classList.add("hidden");
         return;
       }
 
-      if (!wallYtMounted) {
-        ytWallIframe.src = YT_WALL_URL;
-        wallYtMounted = true;
-      }
+      if (!wallPlayer) mountWallPlayer();
+      else if (wallPlayerReady) { try { if (wallPlayer.getPlayerState() !== 1) wallPlayer.playVideo(); } catch (_) {} }
       tvStageEl.classList.remove("hidden");
+      tvWallBarEl.classList.remove("hidden");
 
       const h = Math.max(1, viewport.clientHeight);
       const fovPx = (0.5 / Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5))) * h;
