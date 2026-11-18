@@ -146,17 +146,24 @@
     #webgl-canvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; position: relative; z-index: 1; }
     #webgl-canvas:active { cursor: grabbing; }
 
-    /* 3D Perspective-Mapped YouTube Living Room TV Stage */
+    /* 3D Perspective-Mapped YouTube Living Room TV Stage (Official Three.js CSS3DRenderer WebKit-safe hierarchy: NO overflow:hidden on perspective/3D nodes!) */
     #tv-css3d-stage {
-      position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 5;
+      position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+      overflow: visible; pointer-events: none; z-index: 5;
+      perspective-origin: 50% 50%; -webkit-perspective-origin: 50% 50%;
     }
     #tv-css3d-camera {
-      position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d;
+      position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+      overflow: visible; transform-origin: 50% 50% 0; -webkit-transform-origin: 50% 50% 0;
+      transform-style: preserve-3d; -webkit-transform-style: preserve-3d;
     }
     #tv-3d-panel {
       position: absolute; width: 352px; height: 198px; left: 0; top: 0;
-      background: var(--cp-surface); border: 2px solid var(--cp-border-strong); border-radius: 3px;
-      overflow: hidden; pointer-events: auto; backface-visibility: hidden;
+      background: var(--cp-surface); border: none; border-radius: 0;
+      overflow: visible; pointer-events: auto;
+      transform-origin: 50% 50% 0; -webkit-transform-origin: 50% 50% 0;
+      transform-style: preserve-3d; -webkit-transform-style: preserve-3d;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
     }
     #tv-3d-panel iframe { width: 100%; height: 100%; border: 0; display: block; }
     .tv-floating-bar {
@@ -465,13 +472,13 @@
       .topbar {
         display: grid; grid-template-columns: minmax(0, 1fr) auto;
         grid-template-areas: "brand actions" "modes modes";
-        padding: 6px 10px; gap: 6px; width: 100%; max-width: 100vw;
+        padding: 6px 8px; gap: 5px; width: 100%; max-width: 100vw;
       }
       .brand-wrap { grid-area: brand; }
       .brand-sub { display: none; }
-      .brand-title { font-size: 13px; letter-spacing: -0.01em; max-width: 100%; }
-      .top-quick-actions { grid-area: actions; gap: 4px; }
-      .top-quick-actions .btn { padding: 4px 6px; font-size: 11px; }
+      .brand-title { font-size: 12.5px; letter-spacing: -0.015em; max-width: 100%; }
+      .top-quick-actions { grid-area: actions; gap: 3px; }
+      .top-quick-actions .btn { padding: 4px 5px; font-size: 10.5px; }
       .desktop-only { display: none !important; }
       .mobile-only { display: inline !important; }
       .mode-switch { grid-area: modes; display: grid; grid-template-columns: 1fr 1fr; width: 100%; min-width: 0; }
@@ -2988,7 +2995,7 @@
       entry:         { x: 7.0,   z: 10.8, floor: 1, yaw: 0.25,  pitch: -0.02 },
       dining:        { x: 9.5,   z: 6.2,  floor: 1, yaw: -1.52, pitch: -0.04 },
       kitchen:       { x: 15.5,  z: 1.5,  floor: 1, yaw: 0.12,  pitch: -0.04 },
-      living:        { x: -18.5, z: -2.0, floor: 1, yaw: -1.15, pitch: -0.03 },
+      living:        { x: -17.8, z: -1.2, floor: 1, yaw: -0.44, pitch: -0.05 },
       game:          { x: -17.5, z: 5.5,  floor: 1, yaw: 3.0,   pitch: -0.03 },
       down_bed:      { x: -6.2,  z: -3.8, floor: 1, yaw: -0.55, pitch: -0.05 },
       down_bath:     { x: 5.8,   z: -3.4, floor: 1, yaw: 0.15,  pitch: -0.06 },
@@ -3518,6 +3525,14 @@
     }
     sheetBtn.addEventListener("click", () => setSheetCollapsed(!workspaceEl.classList.contains("sheet-collapsed")));
 
+    function getWalkVerticalFov(aspect) {
+      if (aspect >= 1.0) return 64;
+      // Hor+ portrait calibration: preserve a natural ~58-degree horizontal FOV on narrow phones without fisheye distortion
+      const minHFovRad = THREE.MathUtils.degToRad(58);
+      const vFov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(minHFovRad * 0.5) / Math.max(0.50, aspect)));
+      return Math.min(84, Math.max(64, vFov));
+    }
+
     function setAppMode(mode) {
       testCamOverride = null;
       appMode = mode;
@@ -3537,8 +3552,6 @@
         coachEl.classList.remove("hidden", "fade-out");
         clearTimeout(coachTimer);
         coachTimer = setTimeout(dismissFPVCoach, 4800);
-        camera.fov = window.innerWidth < 700 ? 72 : 64;
-        camera.updateProjectionMatrix();
         barnDoorGroup.scale.y = 1.0;
         barnDoorGroup.position.y = 3.65;
         mainFloorGroup.visible = true;
@@ -3553,6 +3566,9 @@
         explodedGuidesGroup.visible = false;
         if (window.innerWidth <= 820) setSheetCollapsed(true);
         else if (document.querySelector(".tab-btn.active")?.dataset.tab === "planner") switchTab("inspector");
+        resize();
+        camera.fov = getWalkVerticalFov(camera.aspect);
+        camera.updateProjectionMatrix();
         syncFastWalkUI();
         fpv.currentRoom = "";
         detectFPVRoom();
@@ -4630,18 +4646,27 @@
         tvWallBarEl.classList.remove("hidden");
       }
 
+      const w = Math.max(1, viewport.clientWidth);
       const h = Math.max(1, viewport.clientHeight);
-      const fovPx = (0.5 / Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5))) * h;
+      // Read fovPx directly from Three.js's active camera.projectionMatrix.elements[5] so WebGL and CSS3D can NEVER drift!
+      const fovPx = 0.5 * camera.projectionMatrix.elements[5] * h;
+      tvStageEl.style.width = `${w}px`;
+      tvStageEl.style.height = `${h}px`;
       tvStageEl.style.perspective = `${fovPx}px`;
+      tvStageEl.style.webkitPerspective = `${fovPx}px`;
+      tvCamEl.style.width = `${w}px`;
+      tvCamEl.style.height = `${h}px`;
 
       camera.updateMatrixWorld();
       const m = camera.matrixWorldInverse.elements;
       const camMat = `matrix3d(${epsCss(m[0])},${epsCss(-m[1])},${epsCss(m[2])},${epsCss(m[3])},${epsCss(m[4])},${epsCss(-m[5])},${epsCss(m[6])},${epsCss(m[7])},${epsCss(m[8])},${epsCss(-m[9])},${epsCss(m[10])},${epsCss(m[11])},${epsCss(m[12] * CSS3D_UNIT)},${epsCss(-m[13] * CSS3D_UNIT)},${epsCss(m[14] * CSS3D_UNIT)},${epsCss(m[15])})`;
-      tvCamEl.style.transform = `translateZ(${fovPx}px) ${camMat}`;
+      tvCamEl.style.transform = `translateZ(${fovPx}px) ${camMat} translate(${w * 0.5}px, ${h * 0.5}px)`;
+      tvCamEl.style.webkitTransform = tvCamEl.style.transform;
 
       const e = tvAnchor.matrixWorld.elements;
       const objMat = `matrix3d(${epsCss(e[0])},${epsCss(e[1])},${epsCss(e[2])},${epsCss(e[3])},${epsCss(-e[4])},${epsCss(-e[5])},${epsCss(-e[6])},${epsCss(-e[7])},${epsCss(e[8])},${epsCss(e[9])},${epsCss(e[10])},${epsCss(e[11])},${epsCss(e[12] * CSS3D_UNIT)},${epsCss(e[13] * CSS3D_UNIT)},${epsCss(e[14] * CSS3D_UNIT)},${epsCss(e[15])})`;
       tvPanelEl.style.transform = `translate(-50%, -50%) ${objMat}`;
+      tvPanelEl.style.webkitTransform = tvPanelEl.style.transform;
     }
 
     document.getElementById("btn-night").addEventListener("click", e => {
@@ -4805,16 +4830,24 @@
       else startAutoTour();
     });
 
+    let lastViewportW = 0, lastViewportH = 0;
     function resize() {
       const w = Math.max(1, viewport.clientWidth);
       const h = Math.max(1, viewport.clientHeight);
+      lastViewportW = w;
+      lastViewportH = h;
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
+      if (appMode === "explore") camera.fov = getWalkVerticalFov(camera.aspect);
       camera.updateProjectionMatrix();
       syncFastWalkUI();
     }
     window.addEventListener("resize", resize);
+    if (typeof ResizeObserver !== "undefined") {
+      new ResizeObserver(() => resize()).observe(viewport);
+    }
 
+    if (window.innerWidth <= 820) workspaceEl.classList.add("sheet-collapsed");
     walkMainEnclosureGroup.visible = true;
     walkUpperEnclosureGroup.visible = false;
     upperFloorGroup.position.y = 9.8;
@@ -4996,6 +5029,9 @@
         camera.lookAt(camCtrl.target);
       }
 
+      if (viewport.clientWidth !== lastViewportW || viewport.clientHeight !== lastViewportH) {
+        resize();
+      }
       updateTreeTransparency(dt);
       renderer.render(scene, camera);
       updateCss3dTv();
