@@ -537,6 +537,37 @@
       .lb-hint-text { display: none; }
       .toast-msg { bottom: 104px; max-width: calc(100vw - 24px); text-align: center; }
     }
+    #after-hours {
+      margin: auto; width: min(440px, calc(100% - 24px)); max-height: 88vh; max-height: 88dvh;
+      padding: 18px; overflow: auto; overscroll-behavior: contain; border-radius: 16px;
+      background: var(--cp-bg-elevated); color: var(--cp-text); border: 1px solid var(--cp-border-strong);
+      box-shadow: var(--cp-shadow);
+    }
+    #after-hours::backdrop { background: var(--cp-overlay); }
+    #after-hours header, .ah-actions, .ah-cue { display: flex; align-items: center; gap: 8px; }
+    #after-hours header { justify-content: space-between; }
+    #after-hours h2 { font-size: 24px; }
+    .ah-kicker { color: var(--cp-accent); font-size: 11px; font-weight: 700; letter-spacing: .12em; }
+    #after-hours p, #after-hours small { display: block; color: var(--cp-text-muted); font-size: 13px; line-height: 1.45; margin: 6px 0; }
+    .ah-actions { flex-wrap: wrap; margin: 8px 0; }
+    #after-hours .btn { min-height: 40px; }
+    #ah-hush { position: sticky; top: 0; z-index: 1; background: var(--cp-surface);
+      width: 100%; margin: 8px 0; min-height: 48px; font-size: 16px; }
+    #ah-hush.active { background: var(--cp-accent); }
+    #after-hours.ah-resting > :not(#ah-hush):not(#ah-wake) { display: none; }
+    html[data-theme="light"] #after-hours { background: var(--cp-text); color: var(--cp-bg); }
+    html[data-theme="light"] #after-hours :is(p,small,.ah-kicker) { color: var(--cp-border); }
+    html[data-theme="light"] #ah-card { background: var(--cp-text-muted); color: var(--cp-surface); }
+    #after-hours details { border-top: 1px solid var(--cp-border); padding: 10px 0; }
+    #after-hours summary { cursor: pointer; font-weight: 650; padding: 5px 0; }
+    .ah-cue { margin: 4px 0; }
+    .ah-cue .btn:first-child { flex: 1; text-align: left; }
+    .ah-cue time { float: right; font-variant-numeric: tabular-nums; color: var(--cp-text-muted); }
+    #after-hours :disabled { opacity: .60; cursor: not-allowed; }
+    #ah-card { padding: 12px; background: var(--cp-surface-soft); border-radius: 10px; }
+    #after-hours [hidden] { display: none; }
+    #ah-seek { width: 100%; accent-color: var(--cp-accent); }
+    #ah-status { min-height: 1.4em; }
   </style>
 </head>
 <body>
@@ -553,7 +584,7 @@
       </div>
 
       <div class="top-quick-actions">
-        <button class="btn" id="btn-tv-dock" title="Watch Be Svendsen live at Mount Nemrut (Cercle) on the Living Room TV!">📺 TV</button>
+        <button class="btn" id="ah-open" aria-haspopup="dialog" aria-controls="after-hours" title="After Hours · TV, music and room setup">After Hours</button>
         <button class="btn" id="btn-tour" title="30-second hands-free guided 3D cabin tour">▶ Tour</button>
         <button class="btn active" id="btn-night" title="Toggle sunny golden hour vs. romantic starry night">☀️ Day</button>
         <button class="btn btn-outline-accent" id="btn-top-share" title="Copy sleeping plan &amp; shareable link">Share</button>
@@ -574,7 +605,7 @@
             <span class="dock-sep"></span>
             <button class="btn btn-sm" id="btn-feast-plan" title="Set the Dining Table for Thanksgiving Dinner with booster spots!">🦃 Feast</button>
             <button class="btn btn-sm" id="btn-gates-plan" title="Preview 3D toddler stair gates &amp; step-down markers">🛡️ Gates</button>
-            <button class="btn btn-sm" id="btn-sound" title="Simulate hangout &amp; game noise vs. quiet nap rooms">Nap Sound</button>
+            <button class="btn btn-sm" id="btn-sound" title="Preview possible sound sources, not measured noise">Soundcheck</button>
             <button class="btn btn-sm" id="btn-hunt-plan" title="5-item Thanksgiving Pajama Treasure Hunt for the kids!">Kids Hunt</button>
             <button class="btn btn-sm" id="btn-barn-door">Game Door: Open</button>
             <button class="btn btn-sm" id="btn-labels">Labels: On</button>
@@ -616,7 +647,7 @@
         <div class="tv-floating-bar hidden" id="tv-wall-audio-bar">
           <button type="button" class="btn btn-sm" id="btn-wall-mute" style="padding:2px 7px;font-size:11px">🔇 Unmute TV (15%)</button>
           <input id="tv-wall-vol" type="range" min="0" max="100" value="15" style="width:64px;accent-color:var(--cp-accent);cursor:pointer" title="Living Room TV Volume" />
-          <span id="tv-wall-status" style="font-size:10.5px;color:var(--cp-text-muted)">Auto-mutes ads</span>
+          <span id="tv-wall-status" style="font-size:10.5px;color:var(--cp-text-muted)">Quiet volume</span>
         </div>
         <!-- OPTIONAL POP-OUT / SOUND TV PLAYER DOCK -->
         <div class="tv-pip-dock hidden" id="tv-pip-dock">
@@ -624,6 +655,7 @@
             <span id="tv-dock-title">📺 Be Svendsen</span>
             <div style="display:flex;gap:4px;align-items:center">
               <button type="button" class="pip-close" id="btn-tv-mute-tog" title="Mute / Unmute TV" style="font-size:11px">🔊 15%</button>
+              <button type="button" class="pip-close" id="tv-hush" title="Pause the set and keep sound off">Hush</button>
               <input id="tv-vol-range" type="range" min="0" max="100" value="15" style="width:52px;accent-color:var(--cp-accent);cursor:pointer" title="TV Volume (15%)" />
               <button type="button" class="btn btn-sm" id="btn-tv-goto" style="padding:1px 5px;font-size:10px">Go</button>
               <button type="button" class="pip-close" id="btn-tv-dock-close" title="Minimize to Living Room wall TV">✕</button>
@@ -643,11 +675,11 @@
         </div>
 
         <!-- LIVE PICTURE-IN-PICTURE REAL CABIN PHOTO (WALK MODE) -->
-        <div class="pip-card hidden" id="pip-card" title="Tap image to enlarge, or tap POV to match exact photo camera angle!">
+        <div class="pip-card hidden" id="pip-card" title="Enlarge the photo or preview its angle in 3D">
           <div class="pip-head">
             <span id="pip-title">Real Photo</span>
             <div style="display:flex;gap:3px;align-items:center;flex-shrink:0">
-              <button type="button" class="pip-pov-btn" id="btn-pip-pov" title="Snap 3D camera to match this real photo's exact angle!">📷 POV</button>
+              <button type="button" class="pip-pov-btn" id="btn-pip-pov" title="Approximate this listing-photo angle">📷 POV</button>
               <button type="button" class="pip-close" id="btn-pip-hide" title="Hide preview">✕</button>
             </div>
           </div>
@@ -781,7 +813,7 @@
             <div id="insp-kid-note" class="tip-item" style="margin-bottom:8px;"></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
               <button class="btn btn-outline-accent" id="btn-insp-walk">Walk Here →</button>
-              <button class="btn" id="btn-insp-pov" title="Snap 3D camera to exact Vrbo photo lens angle!">📷 Match Photo POV</button>
+              <button class="btn" id="btn-insp-pov" title="Approximate the listing-photo viewpoint">📷 Match Photo POV</button>
             </div>
           </div>
 
@@ -858,6 +890,38 @@
     </div>
   </div>
 
+  <dialog id="after-hours" aria-labelledby="ah-title">
+    <header><div><span class="ah-kicker">CABIN · B-SIDE</span><h2 id="ah-title">After Hours</h2></div>
+      <button type="button" class="btn" id="ah-close" autofocus>Close</button></header>
+    <p>Be Svendsen at Mount Nemrut · Cercle</p>
+    <button type="button" class="btn btn-outline-accent" id="ah-hush">Hush · pause all sound</button>
+    <button type="button" class="btn" id="ah-wake" hidden>Back to controls</button>
+    <div class="ah-actions"><button type="button" class="btn" id="ah-play">Play set</button>
+      <button type="button" class="btn" id="btn-tv-dock">View TV</button>
+      <span id="ah-clock" aria-label="Set position">–:––</span></div>
+    <input id="ah-seek" aria-label="Seek through the set" type="range" min="0" max="1" value="0" step="1" disabled>
+    <p id="ah-status" role="status"></p>
+    <details open><summary>Your three cues</summary>
+      <small>Save the moment you’re hearing. Tap its name to play it. Bookmarks stay in this browser.</small>
+      <div id="ah-cues"></div>
+    </details>
+    <details><summary>Set up the room</summary>
+      <p>Park the coffee table, angle the armchairs, and see four dance spots and the path past the steps. Fit is estimated from listing photos, not measured.</p>
+      <div class="ah-actions"><button type="button" class="btn" id="ah-floor" aria-pressed="false">Clear the floor</button>
+        <button type="button" class="btn" id="ah-plan">See floor plan</button></div>
+      <button type="button" class="btn" id="ah-light" aria-pressed="false">Preview lamplight</button>
+      <small id="ah-light-note"></small>
+      <button type="button" class="btn" id="ah-sightline" hidden>See doorway from sofa</button>
+      <label id="ah-door-label" hidden>Bedroom door · open to ajar
+        <input type="range" id="ah-door" min="0" max="100" value="65" aria-label="Bedroom door preview, open to ajar"></label>
+      <p><strong>Before bedtime:</strong> play a bass-heavy passage at your intended level. Have someone listen upstairs, then adjust the actual speaker or sub. This page can’t measure what carries through the floor.</p>
+    </details>
+    <details id="ah-encore"><summary>Private encore</summary>
+      <p>Personal screen only. Skip any card. Nothing to answer, save, or share.</p>
+      <button type="button" class="btn" id="ah-draw">Show one card on this screen</button>
+      <p id="ah-card" hidden></p>
+    </details>
+  </dialog>
   <div class="toast-msg hidden" id="toast-msg">Copied!</div>
 
   <!-- LARGE PHOTO LIGHTBOX MODAL -->
@@ -985,7 +1049,7 @@
         id: "garage", name: "Garage (Ping-Pong)", floor: "Outside", level: 0, pos: [-42.5, 3.2, 25.5],
         photos: ["2360520f.jpg", "10e23541.jpg", "f0bd7529.jpg"],
         desc: "Detached vertical-wood gable-roof garage across the West gravel driveway: corrugated steel roll-up door, exposed 2×4 stud interior, regulation Master Indoor ping-pong table, firewood lean-to rack, beach gear, and EV charger.",
-        kidNote: "<strong>Separate Game Cabin:</strong> Across the driveway (~28 ft from the patio) so ping-pong noise never reaches bedrooms."
+        kidNote: "<strong>Separate Game Cabin:</strong> Across the driveway from the patio. Check indoors to hear how much game noise carries."
       },
       lake_beach: {
         id: "lake_beach", name: "Aidway Ln → Lake Beach", floor: "5-Min Walk", level: 0, pos: [21.8, 5.2, 38.5],
@@ -1863,6 +1927,7 @@
       box(2.5, 6.7, 0.16, MAT.knottyPine, 1.25, 0, 0, piv, null, false);
       box(0.15, 0.15, 0.36, MAT.iron, 2.25, -0.2, 0, piv, null, false); // black door lever
       parent.add(piv);
+      return piv;
     }
 
     function addLogCorners(x, z, h, y0, parent) {
@@ -2696,7 +2761,7 @@
     buildWallAxis("x", 1.8, -9.2, 1.0, [], { level: 1, cutH: WALL_H, fullH: FULL_H1, yBase: 0.6, thick: 0.32, mat: MAT.drywall, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
     // 7. Living Room East Shiplap Wall (X = -9.2, Z = -13.75..+2.8 — Downstairs Bedroom Door swung INWARD East +X along Z=-2.24 out of doorway!):
     buildWallAxis("z", -9.2, -13.75, 2.8, [[-5.6, -2.1], [-1.85, 1.65]], { level: 1, cutH: WALL_H, fullH: FULL_H1_SUNK, yBase: 0.24, thick: 0.35, mat: MAT.shiplapV, innerMat: MAT.shiplapH, innerSign: 1, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
-    addOpenPineDoor(-8.98, 0.55, -2.24, 0.04, walkMainEnclosureGroup);
+    const downstairsDoor = addOpenPineDoor(-8.98, 0.55, -2.24, 0.04, walkMainEnclosureGroup);
     // 2 Carpeted Step-Down Treads + Thick Round Peeled-Log Post & Log Railing at Living Room Entrance (exact match to user's closeup photo!)
     box(1.1, 0.38, 3.2, MAT.carpet, -9.75, 0.42, -0.1, mainFloorGroup, "living");
     box(1.95, 0.22, 3.2, MAT.carpet, -10.18, 0.30, -0.1, mainFloorGroup, "living");
@@ -3160,15 +3225,45 @@
     mainFloorGroup.add(livLamp);
     addWarmHalo(-20.2, 2.75, -3.5, 2.6, mainFloorGroup, 0xffbe76, 0.68);
     // 2 Sculpted Herringbone-Cream Rolled-Arm Armchairs facing TV + Black Coffee Table w/ Wood Bowl (Photo b101aaca foreground!)
-    [ [-16.3, 0.16], [-13.1, -0.12] ].forEach(([ax, rot]) => {
-      addSculptedSofa(mainFloorGroup, "living", ax, 0.24, -1.85, Math.PI + rot, 2.05, 2.45, 1, MAT.couchWhite, []);
-    });
-    box(2.15, 0.12, 3.45, MAT.iron, -15.4, 1.34, -6.8, mainFloorGroup, "living"); // Matte-black rectangular coffee table!
+    const livingChairs = [[-16.3, 0.16], [-13.1, -0.12]].map(([ax, rot]) =>
+      addSculptedSofa(mainFloorGroup, "living", ax, 0.24, -1.85, Math.PI + rot, 2.05, 2.45, 1, MAT.couchWhite, []));
+    const coffeeTable = new THREE.Group();
+    coffeeTable.position.set(-15.4, 0, -6.8);
+    mainFloorGroup.add(coffeeTable);
+    box(2.15, 0.12, 3.45, MAT.iron, 0, 1.34, 0, coffeeTable, "living");
     [[-0.95, -1.55], [0.95, -1.55], [-0.95, 1.55], [0.95, 1.55]].forEach(([lx, lz]) => {
-      box(0.12, 1.08, 0.12, MAT.iron, -15.4 + lx, 0.78, -6.8 + lz, mainFloorGroup, "living");
+      box(0.12, 1.08, 0.12, MAT.iron, lx, 0.78, lz, coffeeTable, "living");
     });
     const coffeeBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.20, 0.22, 12), MAT.mahogany);
-    coffeeBowl.position.set(-15.4, 1.48, -6.8); mainFloorGroup.add(coffeeBowl);
+    coffeeBowl.position.set(0, 1.48, 0); coffeeTable.add(coffeeBowl);
+    const loungePieces = [coffeeTable, ...livingChairs];
+    const loungeOriginal = loungePieces.map(m => ({ pos: m.position.clone(), yaw: m.rotation.y }));
+    const dancePreview = new THREE.Group();
+    dancePreview.visible = false;
+    mainFloorGroup.add(dancePreview);
+    const soleGeo = new THREE.CircleGeometry(1, 16);
+    const soleMat = new THREE.MeshBasicMaterial({ color: getThemeColors().accent, depthWrite: false });
+    for (const [x, z, turn] of [[-16.9,-8.7,.3],[-14.3,-8.6,-.3],[-16.8,-5.7,2.7],[-14.2,-5.7,3.5]]) {
+      const pair = new THREE.Group();
+      pair.position.set(x, .315, z); pair.rotation.y = turn;
+      for (const side of [-1, 1]) {
+        const sole = new THREE.Mesh(soleGeo, soleMat);
+        sole.rotation.x = -Math.PI / 2; sole.scale.set(.16,.42,1);
+        sole.position.set(side * .31, 0, side * .06); pair.add(sole);
+      }
+      dancePreview.add(pair);
+    }
+    const aisle = new THREE.Line(new THREE.BufferGeometry().setFromPoints(
+      [[-8.5,.68,-.1],[-10.9,.47,-.1],[-11.8,.33,-.1],[-11.9,.33,-3.9],[-8.75,.65,-3.9]]
+        .map(p => new THREE.Vector3(...p))), new THREE.LineDashedMaterial({ color: 0xf3cb86, dashSize:.30, gapSize:.18 }));
+    aisle.computeLineDistances(); dancePreview.add(aisle);
+    let danceLayout = false, lamplight = false;
+    const bedsidePool = new THREE.PointLight(0xffbb79, 0.85, 9);
+    bedsidePool.position.set(-7.2, 2.56, -12.3);
+    bedsidePool.visible = false; mainFloorGroup.add(bedsidePool);
+    const stepGuide = box(.08,.025,2.95,new THREE.MeshBasicMaterial({color:0xd9b378}),
+      -10.99,.43,-.1,mainFloorGroup,null,false);
+    stepGuide.visible = false;
 
     // Foosball Game Room (X = -21.75..-11.8, Z = +2.8..+13.75 — Blue Cabinet on Teal East Wall X=-12.7 peeks out right behind open Barn Door just like Photo #6!)
     box(2.8, 0.9, 4.5, new THREE.MeshStandardMaterial({ color: 0x5c1f1a, roughness: 0.5 }), -17.0, 2.35, 8.2, mainFloorGroup, "game");
@@ -3748,6 +3843,7 @@
 
     const keysDown = new Set();
     window.addEventListener("keydown", e => {
+      if (document.getElementById("after-hours").open) return;
       const tag = (document.activeElement && document.activeElement.tagName) || "";
       const isModalOpen = !document.getElementById("lightbox").classList.contains("hidden");
       if (isModalOpen) {
@@ -4031,6 +4127,7 @@
       testCamOverride = null;
       appMode = mode;
       const isWalk = mode === "explore";
+      dancePreview.visible = danceLayout && !isWalk;
       document.getElementById("mode-planning").classList.toggle("active", !isWalk);
       document.getElementById("mode-explore").classList.toggle("active", isWalk);
       document.getElementById("planning-controls").classList.toggle("hidden", isWalk);
@@ -4498,6 +4595,7 @@
     }
 
     function updateBedColorsAndUI() {
+      syncBedroomPreview();
       const tc = getThemeColors();
       const colorMap = {
         fam1: new THREE.Color(tc.accent),
@@ -4569,6 +4667,7 @@
     ];
 
     function playChime(freqs = [523.25, 659.25, 783.99]) {
+      if (soundHushed) return;
       try {
         const Ctx = window.AudioContext || window.webkitAudioContext;
         if (!Ctx) return;
@@ -4725,54 +4824,21 @@
       document.getElementById("fpv-loc-text").textContent = ROOMS[targetId].name;
       syncWalkOverlays();
       if (window.innerWidth <= 820) setSheetCollapsed(true);
-      showToast(`📷 Matched exact real-photo angle for ${ROOMS[targetId].name}!`);
+      showToast(`📷 Approximate listing-photo view · ${ROOMS[targetId].name}`);
     }
 
-    function playBassPulse() {
-      try {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (!Ctx) return;
-        const ctx = playChime._ctx || (playChime._ctx = new Ctx());
-        if (ctx.state === "suspended") ctx.resume();
-        [55, 82.41, 110].forEach((f, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = idx === 0 ? "sine" : "triangle";
-          osc.frequency.setValueAtTime(f * 1.12, ctx.currentTime + idx * 0.05);
-          osc.frequency.exponentialRampToValueAtTime(f, ctx.currentTime + idx * 0.05 + 0.24);
-          const t0 = ctx.currentTime + idx * 0.05;
-          gain.gain.setValueAtTime(0.001, t0);
-          gain.gain.exponentialRampToValueAtTime(idx === 0 ? 0.075 : 0.035, t0 + 0.03);
-          gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.42);
-          osc.connect(gain); gain.connect(ctx.destination);
-          osc.start(t0); osc.stop(t0 + 0.45);
-        });
-      } catch (_) {}
-    }
-
-    let subBassBoost = true;
     function triggerPropAction(action) {
       if (action === "barn_door") {
         setBarnDoor(!barnDoorOpen);
         updateSoundLabels();
-        showToast(barnDoorOpen ? "Slid Game Room barn door open" : "Closed Game Room barn door (blocks foosball noise!)");
+        showToast(barnDoorOpen ? "Opened the game room door" : "Closed the game room door · sound can still carry");
       } else if (action === "toggle_foldout") {
         setFoldOutOpen(!foldOutOpen);
       } else if (action === "lake_beach") {
         openLightbox("lake_beach", 0);
         showToast("5-min flat walk down Aidway Ln to Lake Cle Elum / Speelyi Beach!");
       } else if (action === "liv_sound") {
-        subBassBoost = !subBassBoost;
-        playBassPulse();
-        if (!tvDockOpen && appMode === "planning") toggleTvDock(true);
-        else if (!wallSoundOn && appMode === "explore") {
-          wallSoundOn = true; tvUserMuted = false; wallTrack.passiveWallMute = false; wallTrack.guardMuted = true;
-          enforceSinglePlayerAudio(wallPlayer, wallPlayerReady, wallTrack, true);
-          syncTvUiLabels();
-        }
-        showToast(subBassBoost
-          ? "🔊 2.1 Towers + 12\" Bass Sub ON — playing Be Svendsen @ Mt. Nemrut!"
-          : "🔊 2.1 Sound System set to late-night gentle bass");
+        openAfterHours();
         return;
       } else if (action === "camp_fire") {
         campFireOn = !campFireOn;
@@ -4789,7 +4855,8 @@
         showToast(livFireOn ? "Turned on Living Room fireplace glow!" : "Turned off Living Room fireplace");
       } else if (action === "liv_tv") {
         toggleTvDock(true);
-        showToast("Playing Be Svendsen live at Mount Nemrut (Cercle) on the TV!");
+        showToast(soundHushed ? "Hushed · resume from After Hours" : "Living room TV · Be Svendsen at Mount Nemrut");
+        return;
       } else if (action === "spa_jets") {
         spaJetsOn = !spaJetsOn;
         spaSteamGroup.visible = spaJetsOn;
@@ -4881,10 +4948,10 @@
         gameHudAct.classList.toggle("hidden", foundCount === 0);
         gameHudPill.classList.remove("hidden");
       } else if (soundSimMode && appMode === "planning") {
-        gameHudMain.textContent = "Nap Sound Shield:";
+        gameHudMain.textContent = "Soundcheck:";
         gameHudSub.textContent = barnDoorOpen
-          ? "Barn Door OPEN — tap 'Game Door' to block Foosball noise!"
-          : "Barn Door CLOSED — all 3 bedrooms shielded for naps!";
+          ? "Game door open · rings mark possible sources, not measured volume."
+          : "Game door closed · check voices and bass upstairs in person.";
         gameHudAct.textContent = barnDoorOpen ? "Close Door" : "Open Door";
         gameHudAct.classList.remove("hidden");
         gameHudPill.classList.remove("hidden");
@@ -4932,6 +4999,7 @@
     soundSimGroup.visible = false;
     scene.add(soundSimGroup);
     const SOUND_SOURCES = [
+      { id: "music", x: -15.6, y: 1.2, z: -12.5, baseR: 12, closedR: 12, color: 0xbc708a },
       { id: "foos", x: -17.0, y: 1.2, z: 8.2,  baseR: 14.5, closedR: 5.4, color: 0xf59e0b },
       { id: "din",  x: 15.2,  y: 1.2, z: 2.5,  baseR: 11.5, closedR: 11.5, color: 0xe87948 },
       { id: "spa",  x: -26.0, y: 1.2, z: -7.0, baseR: 8.5,  closedR: 8.5,  color: 0x38bdf8 },
@@ -4963,16 +5031,9 @@
 
     function updateSoundLabels() {
       soundStatusBadges.forEach(b => {
-        if (b.room === "down_bed") {
-          b.el.className = barnDoorOpen ? "pin-label quiet-warn" : "pin-label quiet-good";
-          b.el.textContent = barnDoorOpen ? "1st-Flr Nap: Moderate (Close Barn Door)" : "1st-Flr Nap: Quiet Shielded";
-        } else if (b.room === "up_west") {
-          b.el.className = "pin-label quiet-good";
-          b.el.textContent = "Upstairs West: Very Quiet for Kids";
-        } else {
-          b.el.className = "pin-label quiet-good";
-          b.el.textContent = "Upstairs 2-Queen: Very Quiet (Isolated)";
-        }
+        b.el.className = "pin-label";
+        b.el.textContent = b.room === "down_bed" ? "Downstairs · next to music" :
+          b.room === "up_west" ? "West suite · listen here" : "2-Queen suite · listen here";
       });
       if (soundSimMode) updateGameHud();
     }
@@ -5048,12 +5109,22 @@
         glowSprites.forEach(g => { g.sp.material.opacity = g.baseOp; });
         steamMat.opacity = 0.22;
       }
+      if (lamplight && nightMode) {
+        for (const pl of interiorPointLights) {
+          if (pl.position.x < -9 && pl.position.z < 1 && pl.position.y > 7 && pl.position.y < 8) pl.intensity *= .2;
+          if (pl.position.x === -20 && pl.position.y === 3.2) pl.intensity *= 1.3;
+        }
+        for (const {sp} of glowSprites) {
+          if (sp.parent === walkMainEnclosureGroup && sp.position.x < -9 && sp.position.y > 7 && sp.position.z < 1)
+            sp.material.opacity *= .2;
+        }
+      }
     }
 
     // --- 3B. OFFICIAL YOUTUBE IFRAME API ENGINE ("Be Svendsen live at Mount Nemrut, in Türkiye for Cercle" — Gentle 15% Volume + Auto-Mute Commercials!) ---
     const YT_VIDEO_ID = "5mpafLYHVd0";
     let tvVolume = 15; // Gentle 15% cozy background level!
-    let tvUserMuted = false;
+    let tvUserMuted = true;
     let wallSoundOn = false;
     const tvStageEl = document.getElementById("tv-css3d-stage");
     const tvCamEl = document.getElementById("tv-css3d-camera");
@@ -5072,8 +5143,20 @@
     let ytApiLoading = false;
     let wallPlayer = null, wallPlayerReady = false;
     let dockPlayer = null, dockPlayerReady = false;
-    const wallTrack = { lastCt: -1, stalledTicks: 0, guardMuted: true, passiveWallMute: true };
-    const dockTrack = { lastCt: -1, stalledTicks: 0, guardMuted: true, passiveWallMute: false };
+    const wallTrack = { lastCt: -1, stalledTicks: 0, guardMuted: true, settlingUntil: 0 };
+    const dockTrack = { lastCt: -1, stalledTicks: 0, guardMuted: true, settlingUntil: 0 };
+    let soundHushed = false, pendingCue = null;
+    try { soundHushed = sessionStorage.getItem("cabin:hushed") === "1"; }
+    catch (err) { console.info("Hush available for this visit only:", err.name); }
+    const wallIsActive = () => !tvDockOpen && !tvStageEl.classList.contains("hidden");
+    const activeMusicPlayer = () => tvDockOpen ? (dockPlayerReady ? dockPlayer : null) :
+      (wallIsActive() && wallPlayerReady ? wallPlayer : null);
+    function silencePlayer(p) {
+      if (!p) return;
+      if (!p.isMuted()) p.mute();
+      const state = p.getPlayerState();
+      if (state === 1 || state === 3) p.pauseVideo();
+    }
 
     // Perceptual volume curve: YouTube's 0-100 scale is linear amplitude, so 15% slider -> 8 (-22 dB cozy cabin lounge), 50% -> 39, 100% -> 100
     function toPerceptualYtVol(uiPct) {
@@ -5094,6 +5177,7 @@
       };
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
+      tag.onerror = () => { ytApiLoading = false; tag.remove(); musicStatus("YouTube is unavailable. Check your connection, then try Play set."); };
       document.head.appendChild(tag);
     }
     if (window.location.protocol.startsWith("http")) ensureYtApi();
@@ -5104,20 +5188,15 @@
         const dur = typeof player.getDuration === "function" ? player.getDuration() : 0;
         const ct = typeof player.getCurrentTime === "function" ? player.getCurrentTime() : 0;
         const vd = typeof player.getVideoData === "function" ? player.getVideoData() : null;
-        if (st === 0 && typeof player.seekTo === "function") {
-          player.seekTo(0, true);
-          player.playVideo();
-          return { isAd: false, readyMain: true };
-        }
         // Paused by user (2) or cued (5): not an ad
         if (st === 2 || st === 5) {
           trk.stalledTicks = 0;
           return { isAd: false, readyMain: dur >= 1000 };
         }
-        // Different video_id or short duration (< 600s vs Be Svendsen's 7,351s set) = guaranteed commercial!
+        // The iframe has no ad event. Keep unfamiliar or short clips muted.
         if (vd && vd.video_id && vd.video_id !== YT_VIDEO_ID) return { isAd: true, readyMain: false };
         if (dur > 0 && dur < 600) return { isAd: true, readyMain: false };
-        // Pre-roll ads report state === -1 (UNSTARTED) and dur === 0 while audio blasts! Keep muted until main 3,326s video reaches PLAYING (1)
+        // Wait for the long-form set to be identified before allowing sound.
         if (dur < 1000 || st === -1) return { isAd: st === -1, readyMain: false };
         if (st === 1) {
           if (Math.abs(ct - trk.lastCt) < 0.005) trk.stalledTicks++;
@@ -5134,36 +5213,31 @@
 
     function enforceSinglePlayerAudio(player, isReady, trk, isWall) {
       if (!player || !isReady) return false;
+      if (soundHushed || (isWall ? !wallIsActive() : !tvDockOpen)) {
+        silencePlayer(player); trk.guardMuted = true; return false;
+      }
       const targetYtVol = toPerceptualYtVol(tvVolume);
       const { isAd, readyMain } = inspectPlayerAdState(player, trk);
       try {
-        // Detect if the user clicked YouTube's built-in unmute button directly inside the 3D Wall TV!
-        if (isWall && !wallSoundOn && trk.passiveWallMute && typeof player.isMuted === "function" && !player.isMuted()) {
-          wallSoundOn = true;
-          tvUserMuted = false;
-          trk.passiveWallMute = false;
-          trk.guardMuted = true; // Force perceptual volume clamp before unmuting!
-        }
-
         const wantSilent = (isWall && !wallSoundOn) || tvUserMuted || tvVolume <= 0 || isAd || !readyMain;
         if (wantSilent) {
-          if (typeof player.setVolume === "function") player.setVolume(isAd ? 0 : targetYtVol);
+          if (player.getVolume() !== (isAd ? 0 : targetYtVol)) player.setVolume(isAd ? 0 : targetYtVol);
           if (typeof player.mute === "function" && !player.isMuted()) player.mute();
           trk.guardMuted = true;
-          if (isWall && !wallSoundOn) trk.passiveWallMute = true;
         } else {
           // Confirmed real Be Svendsen track playing & user wants sound: clamp perceptual volume BEFORE unmuting!
           if (typeof player.setVolume === "function" && Math.abs(player.getVolume() - targetYtVol) > 1) {
             player.setVolume(targetYtVol);
           }
           if (trk.guardMuted) {
+            if (player.getVolume() > targetYtVol) return isAd;
             trk.guardMuted = false;
+            trk.settlingUntil = performance.now() + 900;
             if (typeof player.setVolume === "function") player.setVolume(targetYtVol);
             if (typeof player.unMute === "function" && player.isMuted()) player.unMute();
-          } else if (typeof player.isMuted === "function" && player.isMuted()) {
+          } else if (performance.now() > trk.settlingUntil && player.isMuted()) {
             // User clicked mute directly inside YouTube's iframe controls — respect it!
-            if (isWall) wallSoundOn = false;
-            else tvUserMuted = true;
+            tvUserMuted = true;
           }
         }
       } catch (_) {}
@@ -5173,17 +5247,17 @@
     function syncTvUiLabels(adActive = false) {
       tvVolRange.value = String(tvVolume);
       tvWallVol.value = String(tvVolume);
-      const effMute = tvUserMuted || tvVolume === 0;
+      const effMute = soundHushed || tvUserMuted || tvVolume === 0;
       const compactMob = isTouchOrMobileUI();
-      btnTvMuteTog.textContent = adActive ? "🔇 Ad" : `${effMute ? "🔇" : "🔊"} ${tvVolume}%`;
+      btnTvMuteTog.textContent = soundHushed ? "Hushed" : adActive ? "🔇 Ad" : `${effMute ? "🔇" : "🔊"} ${tvVolume}%`;
       tvDockTitle.textContent = adActive ? "🔇 Ad Muted" : "📺 Be Svendsen";
-      btnWallMute.textContent = (!wallSoundOn || effMute)
+      btnWallMute.textContent = soundHushed ? "Hushed" : (!wallSoundOn || effMute)
         ? (compactMob ? `🔇 TV ${tvVolume}%` : `🔇 Unmute TV (${tvVolume}%)`)
         : (adActive ? "🔇 Ad Muted" : `🔊 TV: ${tvVolume}%`);
-      tvWallStatus.textContent = adActive ? "Commercial muted!" : "Ads auto-muted";
+      tvWallStatus.textContent = soundHushed ? "After Hours → Resume" : adActive ? "Audio held" : "Quiet volume";
     }
 
-    // 200ms heartbeat guarantees YouTube NEVER blasts commercials or resets to 100% volume!
+    // Both UI transitions and iframe callbacks must respect the same playback owner.
     setInterval(() => {
       let adOn = false;
       if (tvDockOpen && dockPlayer && dockPlayerReady) {
@@ -5201,14 +5275,16 @@
       if (!ytApiReady || wallPlayer) return;
       wallPlayer = new YT.Player("yt-wall-slot", {
         width: "100%", height: "100%", videoId: YT_VIDEO_ID,
-        playerVars: { autoplay: 1, mute: 1, playsinline: 1, controls: 1, rel: 0, modestbranding: 1 },
+        playerVars: { autoplay: 0, mute: 1, playsinline: 1, controls: 1, rel: 0 },
         events: {
           onReady: e => {
             wallPlayerReady = true;
             wallTrack.guardMuted = true;
-            try { e.target.mute(); e.target.setVolume(toPerceptualYtVol(tvVolume)); e.target.playVideo(); } catch (_) {}
+            e.target.mute(); e.target.setVolume(toPerceptualYtVol(tvVolume));
+            if (!soundHushed && wallIsActive()) e.target.playVideo();
           },
-          onStateChange: () => enforceSinglePlayerAudio(wallPlayer, wallPlayerReady, wallTrack, true)
+          onStateChange: e => onMusicState(e, true),
+          onError: () => musicStatus("The wall TV couldn’t load the set.")
         }
       });
     }
@@ -5220,32 +5296,28 @@
         if (dockPlayerReady) {
           dockTrack.guardMuted = true;
           enforceSinglePlayerAudio(dockPlayer, true, dockTrack, false);
-          try { dockPlayer.playVideo(); } catch (_) {}
+          if (!soundHushed && tvDockOpen) dockPlayer.playVideo();
         }
         return;
       }
       dockPlayer = new YT.Player("yt-dock-slot", {
         width: "100%", height: "100%", videoId: YT_VIDEO_ID,
-        playerVars: { autoplay: 1, mute: 1, playsinline: 1, controls: 1, rel: 0, modestbranding: 1 },
+        playerVars: { autoplay: 0, mute: 1, playsinline: 1, controls: 1, rel: 0 },
         events: {
           onReady: e => {
             dockPlayerReady = true;
             dockTrack.guardMuted = true;
-            try { e.target.mute(); e.target.setVolume(toPerceptualYtVol(tvVolume)); e.target.playVideo(); } catch (_) {}
-            setTimeout(() => enforceSinglePlayerAudio(dockPlayer, dockPlayerReady, dockTrack, false), 150);
+            e.target.mute(); e.target.setVolume(toPerceptualYtVol(tvVolume));
+            if (!soundHushed && tvDockOpen) e.target.playVideo();
           },
-          onStateChange: () => enforceSinglePlayerAudio(dockPlayer, dockPlayerReady, dockTrack, false)
+          onStateChange: e => onMusicState(e, false),
+          onError: () => { pendingCue = null; musicStatus("The TV couldn’t load the set. Try View TV."); }
         }
       });
     }
 
     function setTvVolumeBoth(val) {
       tvVolume = Math.max(0, Math.min(100, Number(val)));
-      if (tvVolume > 0) {
-        tvUserMuted = false;
-        dockTrack.guardMuted = true;
-        if (!tvDockOpen) { wallSoundOn = true; wallTrack.guardMuted = true; }
-      }
       enforceSinglePlayerAudio(dockPlayer, dockPlayerReady, dockTrack, false);
       enforceSinglePlayerAudio(wallPlayer, wallPlayerReady, wallTrack, true);
       syncTvUiLabels();
@@ -5254,23 +5326,23 @@
     tvVolRange.addEventListener("input", e => setTvVolumeBoth(e.target.value));
     tvWallVol.addEventListener("input", e => setTvVolumeBoth(e.target.value));
     btnTvMuteTog.addEventListener("click", () => {
+      if (soundHushed) { openAfterHours(); return; }
       tvUserMuted = !tvUserMuted;
       if (!tvUserMuted) dockTrack.guardMuted = true;
       enforceSinglePlayerAudio(dockPlayer, dockPlayerReady, dockTrack, false);
       syncTvUiLabels();
     });
     btnWallMute.addEventListener("click", () => {
-      wallSoundOn = !wallSoundOn;
+      if (soundHushed) { openAfterHours(); return; }
+      wallSoundOn = !wallSoundOn || tvUserMuted;
+      tvUserMuted = !wallSoundOn;
       if (wallSoundOn) {
         tvUserMuted = false;
-        wallTrack.passiveWallMute = false;
         wallTrack.guardMuted = true;
       } else {
-        wallTrack.passiveWallMute = false;
         if (wallPlayer && wallPlayerReady && typeof wallPlayer.mute === "function") {
           try { wallPlayer.mute(); } catch (_) {}
         }
-        wallTrack.passiveWallMute = true;
       }
       enforceSinglePlayerAudio(wallPlayer, wallPlayerReady, wallTrack, true);
       syncTvUiLabels();
@@ -5293,10 +5365,11 @@
         mountDockPlayer();
         syncTvUiLabels();
       } else {
+        pendingCue = null;
         if (dockPlayer && dockPlayerReady) { try { dockPlayer.pauseVideo(); dockPlayer.mute(); } catch (_) {} }
       }
     }
-    btnTvDock.addEventListener("click", () => toggleTvDock());
+    btnTvDock.addEventListener("click", () => { ahDialog.close(); toggleTvDock(true); });
     document.getElementById("btn-tv-dock-close").addEventListener("click", () => toggleTvDock(false));
     document.getElementById("btn-tv-goto").addEventListener("click", () => {
       if (appMode !== "explore") setAppMode("explore");
@@ -5315,7 +5388,7 @@
         if (!tvStageEl.classList.contains("hidden")) {
           tvStageEl.classList.add("hidden");
           tvWallBarEl.classList.add("hidden");
-          if (wallPlayer && wallPlayerReady && !wallSoundOn) { try { wallPlayer.mute(); } catch (_) {} }
+          if (wallPlayerReady) silencePlayer(wallPlayer);
         }
         return;
       }
@@ -5323,17 +5396,20 @@
       camera.getWorldDirection(camDir);
       const toTv = new THREE.Vector3(-15.6 - camera.position.x, 3.55 - camera.position.y, -12.715 - camera.position.z).normalize();
       if (camDir.dot(toTv) < 0.22) {
+        if (wallPlayerReady && !tvStageEl.classList.contains("hidden")) silencePlayer(wallPlayer);
         livTvScreenMesh.visible = true;
         tvStageEl.classList.add("hidden");
         tvWallBarEl.classList.add("hidden");
         return;
       }
 
-      if (!wallPlayer) mountWallPlayer();
-      else if (wallPlayerReady) { try { if (wallPlayer.getPlayerState() !== 1) wallPlayer.playVideo(); } catch (_) {} }
+      const enteringWall = tvStageEl.classList.contains("hidden");
+      if (!wallPlayer && !soundHushed) mountWallPlayer();
+      else if (enteringWall && wallPlayerReady && !soundHushed) wallPlayer.playVideo();
       // Hide the WebGL fallback placeholder texture while the live CSS3D YouTube screen is active so there is only 1 screen!
-      livTvScreenMesh.visible = false;
+      livTvScreenMesh.visible = !wallPlayerReady;
       tvStageEl.classList.remove("hidden");
+      tvPanelEl.style.visibility = wallPlayerReady ? "visible" : "hidden";
       if (tvWallBarEl.classList.contains("hidden")) {
         syncTvUiLabels();
         tvWallBarEl.classList.remove("hidden");
@@ -5372,6 +5448,7 @@
       nightMode = !nightMode;
       e.currentTarget.classList.toggle("active", nightMode);
       e.currentTarget.textContent = nightMode ? "☀️ Day" : "🌙 Night";
+      syncBedroomPreview();
       syncSceneTheme();
       showToast(nightMode ? "Cozy Thanksgiving Night Mode ON! (Tap fireplaces, TV & hot tub!)" : "Sunny Cascade Day Mode");
     });
@@ -5559,6 +5636,212 @@
       else startAutoTour();
     });
 
+    const ah = id => document.getElementById(id);
+    const ahDialog = ah("after-hours");
+    const cueNames = ["First Drink", "Dance Floor", "Last Dance"];
+    const cueKey = `cabin:cues:${YT_VIDEO_ID}`;
+    let cues = [null, null, null];
+    try {
+      const saved = JSON.parse(localStorage.getItem(cueKey));
+      if (Array.isArray(saved) && saved.length === cues.length)
+        cues = saved.map(n => Number.isSafeInteger(n) && n >= 0 ? n : null);
+    } catch (err) { console.info("Local cue points unavailable:", err.name); }
+    const formatCue = n => `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, "0")}`;
+    function musicStatus(text) { ah("ah-status").textContent = text; }
+    function setTimeline(p) {
+      if (!p || p.getVideoData?.().video_id !== YT_VIDEO_ID ||
+          ![1,2,5].includes(p.getPlayerState()) || p.getDuration() < 1000) return null;
+      const duration = p.getDuration(), position = p.getCurrentTime();
+      return Number.isFinite(duration) && Number.isFinite(position) && position >= 0 && position <= duration ?
+        { duration, position } : null;
+    }
+    function applyPendingCue(p) {
+      if (pendingCue === null || soundHushed || p !== activeMusicPlayer()) return;
+      const timeline = setTimeline(p);
+      if (!timeline) return;
+      const seconds = pendingCue; pendingCue = null;
+      p.seekTo(Math.min(seconds, Math.floor(timeline.duration) - 1), true);
+    }
+    function onMusicState(e, isWall) {
+      const p = e.target, ready = isWall ? wallPlayerReady : dockPlayerReady;
+      if (!ready) return;
+      if (soundHushed || p !== activeMusicPlayer()) { silencePlayer(p); return; }
+      if (e.data === 0) { p.seekTo(0, true); p.playVideo(); return; }
+      enforceSinglePlayerAudio(p, true, isWall ? wallTrack : dockTrack, isWall);
+      applyPendingCue(p);
+    }
+    function playSet(seconds = null, enableSound = true) {
+      if (soundHushed) return;
+      pendingCue = seconds;
+      const p = activeMusicPlayer();
+      if (enableSound) {
+        tvUserMuted = false; wallSoundOn = true;
+        if (tvVolume === 0) tvVolume = 15;
+      }
+      if (p) {
+        const track = p === wallPlayer ? wallTrack : dockTrack;
+        track.guardMuted = true;
+        p.setVolume(toPerceptualYtVol(tvVolume));
+        applyPendingCue(p); p.playVideo();
+      } else {
+        toggleTvDock(true);
+      }
+      musicStatus(seconds === null ? "Starting the set. If playback is blocked, use View TV." :
+        `Selected ${formatCue(seconds)} · playback begins when the set is ready.`);
+    }
+    function setHushed(on) {
+      soundHushed = on; pendingCue = null;
+      ah("tv-hush").textContent = on ? "Resume" : "Hush";
+      try { sessionStorage.setItem("cabin:hushed", on ? "1" : "0"); }
+      catch (err) { console.info("Hush will not survive reload:", err.name); }
+      if (on) {
+        // Send both commands even if the cached iframe state hasn't caught up yet.
+        for (const [p, ready] of [[dockPlayer,dockPlayerReady],[wallPlayer,wallPlayerReady]]) {
+          if (ready) { p.mute(); p.pauseVideo(); }
+        }
+        if (playChime._ctx?.state === "running") playChime._ctx.suspend().catch(err => console.warn(err.name));
+        musicStatus("Paused and muted. Only Resume releases Hush.");
+      } else {
+        // If already muted before Hush, Resume preserves that choice.
+        playSet(null, false);
+        musicStatus(tvUserMuted ? "Resumed muted. Choose Play set for sound." : "Resumed at your selected volume.");
+      }
+      syncTvUiLabels(); renderDeck();
+    }
+    function renderDeck() {
+      const timeline = setTimeline(activeMusicPlayer());
+      ah("ah-hush").textContent = soundHushed ? "Resume · release Hush" : "Hush · pause all sound";
+      ah("ah-hush").classList.toggle("active", soundHushed);
+      ah("ah-play").disabled = soundHushed;
+      ah("ah-clock").textContent = timeline ? `${formatCue(timeline.position)} / ${formatCue(timeline.duration)}` : "–:––";
+      const seek = ah("ah-seek");
+      seek.disabled = !timeline || soundHushed;
+      if (timeline) {
+        seek.max = Math.floor(timeline.duration) - 1;
+        if (document.activeElement !== seek) seek.value = Math.floor(timeline.position);
+      }
+      cueNames.forEach((name, i) => {
+        const play = ah(`ah-cue-${i}`), save = ah(`ah-save-${i}`);
+        play.disabled = soundHushed || cues[i] === null;
+        play.querySelector("time").textContent = cues[i] === null ? "Not set" : formatCue(cues[i]);
+        save.disabled = !timeline || soundHushed;
+        save.setAttribute("aria-label", `Save current position as ${name}`);
+      });
+    }
+    cueNames.forEach((name, i) => {
+      const row = document.createElement("div"); row.className = "ah-cue";
+      row.innerHTML = `<button type="button" class="btn" id="ah-cue-${i}">${name} <time></time></button>
+        <button type="button" class="btn" id="ah-save-${i}">Save here</button>`;
+      ah("ah-cues").append(row);
+      ah(`ah-cue-${i}`).addEventListener("click", () => playSet(cues[i]));
+      ah(`ah-save-${i}`).addEventListener("click", () => {
+        const point = setTimeline(activeMusicPlayer());
+        if (!point || soundHushed) { musicStatus("Play the set to save its current position."); return; }
+        cues[i] = Math.floor(point.position);
+        try { localStorage.setItem(cueKey, JSON.stringify(cues)); musicStatus(`${name} saved at ${formatCue(cues[i])}.`); }
+        catch (err) { musicStatus(`${name} saved for this visit only. Browser storage is unavailable.`); }
+        renderDeck();
+      });
+    });
+    ah("ah-seek").addEventListener("change", e => {
+      const p = activeMusicPlayer();
+      if (!soundHushed && setTimeline(p)) { p.seekTo(Number(e.target.value), true); e.target.blur(); }
+    });
+    ah("ah-play").addEventListener("click", () => playSet());
+    ah("ah-hush").addEventListener("click", () => setHushed(!soundHushed));
+    ah("tv-hush").textContent = soundHushed ? "Resume" : "Hush";
+    ah("tv-hush").addEventListener("click", () => setHushed(!soundHushed));
+    function openAfterHours() {
+      keysDown.clear(); fpvWalkGoal = null;
+      if (autoTour.active) stopAutoTour();
+      if (!ahDialog.open) ahDialog.showModal();
+      syncBedroomPreview(); renderDeck();
+      musicStatus(soundHushed ? "Paused and muted. Only Resume releases Hush." :
+        "Pick a moment in the set, then choose Save here.");
+    }
+    ah("ah-open").addEventListener("click", openAfterHours);
+    ah("ah-close").addEventListener("click", () => ahDialog.close());
+    setInterval(() => {
+      if (pendingCue !== null) applyPendingCue(activeMusicPlayer());
+      if (ahDialog.open) renderDeck();
+    }, 500);
+
+    function seeFloor() {
+      ahDialog.close();
+      setAppMode("planning"); setViewMode("downstairs"); selectRoom("living", false, true);
+      if (window.innerWidth <= 820) setSheetCollapsed(true);
+      camCtrl.goalTarget.set(-15.35,1.4,-5.5); camCtrl.goalRadius = 27; camCtrl.goalPhi = .32;
+    }
+    ah("ah-plan").addEventListener("click", seeFloor);
+    ah("ah-floor").addEventListener("click", () => {
+      danceLayout = !danceLayout;
+      const newLayout = [[-14.55,1.28,Math.PI/2],[-17.9,-1.7,2.48],[-13.6,-1.78,3.76]];
+      loungePieces.forEach((m, i) => {
+        m.position.copy(loungeOriginal[i].pos); m.rotation.y = loungeOriginal[i].yaw;
+        if (danceLayout) { const [x,z,yaw] = newLayout[i]; m.position.x=x; m.position.z=z; m.rotation.y=yaw; }
+      });
+      ah("ah-floor").textContent = danceLayout ? "Restore the room" : "Clear the floor";
+      ah("ah-floor").setAttribute("aria-pressed", String(danceLayout));
+      seeFloor(); showToast(danceLayout ? "Four dance spots · dashed line is the route to the steps and door" : "Original furniture layout restored");
+    });
+    function bedroomFree() {
+      const bed = bedState.queen_dn;
+      return bed?.group === "open" && /^(?:free(?:\s*\/\s*nap bed)?|nap bed|unassigned)?$/i.test(String(bed.note || "").trim());
+    }
+    function syncBedroomPreview() {
+      const available = nightMode && bedroomFree();
+      if (lamplight && !available) { lamplight = false; syncSceneTheme(); }
+      ah("ah-light").disabled = !available;
+      ah("ah-light").setAttribute("aria-pressed", String(lamplight));
+      ah("ah-light").textContent = lamplight ? "Restore normal lighting" : "Preview lamplight";
+      ah("ah-light-note").textContent = !bedroomFree() ? "Unavailable: the downstairs queen is assigned or has a custom note." :
+        !nightMode ? "Switch the cabin to Night to preview this scene." : "Downstairs queen is free in this plan. Lighting and door position are 3D previews only.";
+      ah("ah-door-label").hidden = ah("ah-sightline").hidden = !lamplight;
+      downstairsDoor.rotation.y = .04 + (lamplight ? 1.2 * Number(ah("ah-door").value) / 100 : 0);
+      bedsidePool.visible = stepGuide.visible = lamplight;
+    }
+    ah("ah-light").addEventListener("click", () => {
+      if (!bedroomFree() || !nightMode) return;
+      lamplight = !lamplight; syncSceneTheme(); syncBedroomPreview();
+      if (lamplight) ah("ah-sightline").click();
+    });
+    ah("ah-door").addEventListener("input", syncBedroomPreview);
+    ah("ah-sightline").addEventListener("click", () => {
+      if (!lamplight) return;
+      ahDialog.close(); setAppMode("explore");
+      fpv.floor = 1; fpv.x = -18.3; fpv.z = -7.2; fpv.y = fpv.goalY = .24;
+      fpv.yaw = Math.atan2(-9.1,-3.3); fpv.pitch = -.1; detectFPVRoom();
+    });
+
+    const privateCards = [
+      "For this track, flirt with your partner like you haven’t met yet.",
+      "Whisper what you want to happen when this song ends.",
+      "Pull your partner close. Pick the next move together before the beat comes back."
+    ];
+    let cardTimer, lastCard = -1;
+    function putCardAway() {
+      clearTimeout(cardTimer);
+      ah("ah-card").textContent = ""; ah("ah-card").hidden = true;
+      ah("ah-draw").textContent = "Show one card on this screen";
+    }
+    function restScreen() {
+      putCardAway(); ahDialog.classList.add("ah-resting"); ah("ah-wake").hidden = false; ah("ah-wake").focus();
+    }
+    function wakeScreen() {
+      ahDialog.classList.remove("ah-resting"); ah("ah-wake").hidden = true;
+    }
+    ah("ah-wake").addEventListener("click", () => { wakeScreen(); ah("ah-close").focus(); });
+    ah("ah-draw").addEventListener("click", () => {
+      if (!ah("ah-card").hidden) { restScreen(); return; }
+      lastCard = (lastCard + 1 + Math.floor(Math.random() * (privateCards.length - 1))) % privateCards.length;
+      ah("ah-card").textContent = privateCards[lastCard];
+      ah("ah-card").hidden = false; ah("ah-draw").textContent = "Put card away";
+      cardTimer = setTimeout(restScreen, 12000);
+    });
+    ahDialog.addEventListener("close", () => { putCardAway(); wakeScreen(); ah("ah-encore").open = false; });
+    ah("ah-encore").addEventListener("toggle", () => { if (!ah("ah-encore").open) putCardAway(); });
+    document.addEventListener("visibilitychange", () => { if (document.hidden) putCardAway(); });
+
     let lastViewportW = 0, lastViewportH = 0;
     function resize() {
       const w = Math.max(1, viewport.clientWidth);
@@ -5608,7 +5891,8 @@
       // Sync cutaway stained-glass front door lites in Plan Mode vs full-height doors in Walk Mode, and animate 2.1 Subwoofer & Tower Cones!
       const showCutGlass = !walkMainEnclosureGroup.visible;
       for (let gi = 0; gi < planCutawayGlass.length; gi++) planCutawayGlass[gi].visible = showCutGlass;
-      const bassAmp = subBassBoost ? 0.032 : 0.012;
+      const playing = activeMusicPlayer();
+      const bassAmp = !soundHushed && !tvUserMuted && playing && playing.getPlayerState() === 1 && !playing.isMuted() ? .025 : 0;
       const bassWave = Math.sin(t * 7.8) * Math.max(0, Math.sin(t * 1.9));
       subWooferCone.position.z = 0.71 + bassWave * bassAmp;
       subDustCap.position.z = 0.75 + bassWave * bassAmp;
