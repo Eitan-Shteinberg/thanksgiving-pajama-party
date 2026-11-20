@@ -250,7 +250,9 @@
       background: var(--cp-panel-strong); border: 1px solid var(--cp-border-strong);
       border-radius: 0.625rem; padding: 5px; box-shadow: var(--cp-shadow);
       display: flex; flex-direction: column; gap: 3px;
+      transition: opacity 0.28s ease;
     }
+    .minimap-wrap.hud-tucked, .pip-card.hud-tucked { opacity: 0.24; pointer-events: none; }
     .minimap-head {
       display: flex; justify-content: space-between; align-items: center; gap: 6px;
       font-size: 10px; font-weight: 700; color: var(--cp-text-muted); padding: 0 2px;
@@ -261,11 +263,18 @@
     }
 
     .pip-card {
-      position: absolute; top: 52px; right: 10px; z-index: 16; width: 146px;
+      position: absolute; top: 52px; right: 10px; z-index: 16; width: 152px;
       background: var(--cp-panel-strong); border: 1px solid var(--cp-border-strong);
       border-radius: 0.625rem; padding: 5px; box-shadow: var(--cp-shadow);
       display: flex; flex-direction: column; gap: 4px; cursor: zoom-in;
+      transition: opacity 0.28s ease;
     }
+    .pip-pov-btn {
+      appearance: none; border: 1px solid var(--cp-accent); background: var(--cp-accent-soft);
+      color: var(--cp-accent); border-radius: 5px; font-family: inherit; font-size: 9.5px;
+      font-weight: 700; padding: 1px 4px; cursor: pointer; flex-shrink: 0; line-height: 1.2;
+    }
+    .pip-pov-btn:hover { background: var(--cp-accent); color: var(--cp-accent-fg); }
     .pip-head {
       display: flex; justify-content: space-between; align-items: center; gap: 4px;
       font-size: 10px; font-weight: 700; color: var(--cp-text);
@@ -511,7 +520,7 @@
       #tv-wall-vol { width: 48px !important; }
       .minimap-wrap { top: 46px; left: 6px; padding: 4px; }
       #minimap-canvas { width: 94px; height: 68px; }
-      .pip-card { top: 46px; right: 6px; width: 106px; padding: 4px; }
+      .pip-card { top: 46px; right: 6px; width: 122px; padding: 4px; }
       #pip-img { height: 58px; }
       .tv-pip-dock { right: 8px; bottom: 96px; width: 196px; }
       .tv-pip-dock iframe, #yt-dock-slot { height: 110px !important; }
@@ -562,6 +571,8 @@
             <button class="btn btn-sm" data-view="outside">Yard &amp; Hot Tub</button>
             <button class="btn btn-sm" data-view="top">Top Map</button>
             <span class="dock-sep"></span>
+            <button class="btn btn-sm" id="btn-feast-plan" title="Set the Dining Table for Thanksgiving Dinner with booster spots!">🦃 Feast</button>
+            <button class="btn btn-sm" id="btn-gates-plan" title="Preview 3D toddler stair gates &amp; step-down markers">🛡️ Gates</button>
             <button class="btn btn-sm" id="btn-sound" title="Simulate hangout &amp; game noise vs. quiet nap rooms">Nap Sound</button>
             <button class="btn btn-sm" id="btn-hunt-plan" title="5-item Thanksgiving Pajama Treasure Hunt for the kids!">Kids Hunt</button>
             <button class="btn btn-sm" id="btn-barn-door">Game Door: Open</button>
@@ -569,11 +580,14 @@
           </div>
 
           <div class="view-controls hidden" id="explore-controls">
+            <button class="btn btn-sm" id="btn-feast-walk" title="Set the Dining Table for Thanksgiving Dinner!">🦃 Feast</button>
+            <button class="btn btn-sm" id="btn-gates-walk" title="Preview 3D toddler stair gates &amp; step-down markers">🛡️ Gates</button>
             <button class="btn btn-sm" id="btn-hunt-walk" title="5-item Thanksgiving Pajama Treasure Hunt!">Kids Hunt</button>
             <span class="dock-sep"></span>
             <button class="btn btn-sm" data-spawn="front_yard" data-room-chip="porch">Fire Pit</button>
             <button class="btn btn-sm" data-spawn="patio" data-room-chip="patio">Hot Tub</button>
             <button class="btn btn-sm" data-spawn="garage" data-room-chip="garage">Ping-Pong</button>
+            <button class="btn btn-sm" data-spawn="lake_beach" data-room-chip="lake_beach" title="5-min walk down Aidway Ln to Lake Cle Elum Beach!">🏖️ Beach</button>
             <span class="dock-sep"></span>
             <button class="btn btn-sm" data-spawn="entry" data-room-chip="entry">Front Door</button>
             <button class="btn btn-sm" data-spawn="dining" data-room-chip="dining">Dining &amp; Kitchen</button>
@@ -628,10 +642,13 @@
         </div>
 
         <!-- LIVE PICTURE-IN-PICTURE REAL CABIN PHOTO (WALK MODE) -->
-        <div class="pip-card hidden" id="pip-card" title="Tap to enlarge real cabin photo">
+        <div class="pip-card hidden" id="pip-card" title="Tap image to enlarge, or tap POV to match exact photo camera angle!">
           <div class="pip-head">
             <span id="pip-title">Real Photo</span>
-            <button type="button" class="pip-close" id="btn-pip-hide" title="Hide preview">✕</button>
+            <div style="display:flex;gap:3px;align-items:center;flex-shrink:0">
+              <button type="button" class="pip-pov-btn" id="btn-pip-pov" title="Snap 3D camera to match this real photo's exact angle!">📷 POV</button>
+              <button type="button" class="pip-close" id="btn-pip-hide" title="Hide preview">✕</button>
+            </div>
           </div>
           <img id="pip-img" src="" alt="Live room reference photo" />
         </div>
@@ -761,7 +778,10 @@
             <div class="photo-thumbs" id="insp-thumbs"></div>
             <p id="insp-desc" style="font-size:12px; color:var(--cp-text); margin-bottom:8px;"></p>
             <div id="insp-kid-note" class="tip-item" style="margin-bottom:8px;"></div>
-            <button class="btn btn-outline-accent full-width-btn" id="btn-insp-walk">Walk Inside This Area →</button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <button class="btn btn-outline-accent" id="btn-insp-walk">Walk Here →</button>
+              <button class="btn" id="btn-insp-pov" title="Snap 3D camera to exact Vrbo photo lens angle!">📷 Match Photo POV</button>
+            </div>
           </div>
 
           <div class="card">
@@ -794,6 +814,11 @@
               <div class="tip-item">
                 <strong>Stair Gate &amp; Sliding Game Room Door</strong>
                 <p>Includes a <strong>baby gate</strong> for the log stairs, a <strong>high chair</strong> + kids' plates in the kitchen, a <strong>K-braced sliding barn door</strong> to close off the Foosball Game Room, and ping-pong in the detached garage.</p>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">
+                  <button type="button" class="btn btn-sm btn-outline-accent" id="btn-kids-gates">🛡️ Toggle 3D Stair Gates</button>
+                  <button type="button" class="btn btn-sm" id="btn-kids-foldout">↕ Unfold Ada's Twin Bed</button>
+                  <button type="button" class="btn btn-sm" id="btn-kids-feast">🦃 Set Thanksgiving Feast</button>
+                </div>
               </div>
             </div>
           </div>
@@ -960,6 +985,12 @@
         photos: ["2360520f.jpg", "10e23541.jpg", "f0bd7529.jpg"],
         desc: "Detached vertical-wood gable-roof garage across the West gravel driveway: corrugated steel roll-up door, exposed 2×4 stud interior, regulation Master Indoor ping-pong table, firewood lean-to rack, beach gear, and EV charger.",
         kidNote: "<strong>Separate Game Cabin:</strong> Across the driveway (~28 ft from the patio) so ping-pong noise never reaches bedrooms."
+      },
+      lake_beach: {
+        id: "lake_beach", name: "Aidway Ln → Lake Beach", floor: "5-Min Walk", level: 0, pos: [21.8, 5.2, 38.5],
+        photos: ["bf2989c6.jpg", "162ad7a2.jpg", "b92a05c9.jpg"],
+        desc: "Flat, stroller-friendly walk down Aidway Lane from the cabin driveway straight to Lake Cle Elum / Speelyi Beach with panoramic Cascade mountain views, sandy shoreline, and calm shallow water.",
+        kidNote: "<strong>Easy Stroller Walk:</strong> Flat paved & gravel lane for Galileo (4), Maya (3) & Ada (2); beach chairs & wagon gear in garage."
       }
     };
 
@@ -1304,6 +1335,117 @@
         g.addColorStop(1, "rgba(255, 130, 50, 0.0)");
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, w, h);
+      }, 1, 1),
+      stagPortrait: makeTex(256, 300, (ctx, w, h) => {
+        // Whimsical Stag in Top Hat & Glasses on whitewashed wood planks (exact match to Dining mantel Photo fe50fe0a!)
+        ctx.fillStyle = "#efeae0"; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "rgba(150,140,126,0.28)";
+        for (let y = 48; y < h; y += 50) ctx.fillRect(0, y, w, 2);
+        ctx.strokeStyle = "#cbc2b4"; ctx.lineWidth = 5; ctx.strokeRect(4, 4, w - 8, h - 8);
+        ctx.strokeStyle = "#8a7158"; ctx.lineWidth = 5; ctx.lineCap = "round";
+        [[-1, 108], [1, 148]].forEach(([dir, x0]) => {
+          ctx.beginPath(); ctx.moveTo(x0, 96); ctx.quadraticCurveTo(x0 + dir * 48, 72, x0 + dir * 78, 28); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(x0 + dir * 28, 76); ctx.lineTo(x0 + dir * 22, 42); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(x0 + dir * 50, 58); ctx.lineTo(x0 + dir * 46, 24); ctx.stroke();
+        });
+        const neckG = ctx.createLinearGradient(0, 175, 0, h);
+        neckG.addColorStop(0, "#b89672"); neckG.addColorStop(0.5, "#dfd3c1"); neckG.addColorStop(1, "#9c7b59");
+        ctx.fillStyle = neckG;
+        ctx.beginPath(); ctx.moveTo(84, 294); ctx.quadraticCurveTo(96, 200, 106, 172); ctx.lineTo(150, 172); ctx.quadraticCurveTo(162, 204, 174, 294); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#a6835f";
+        ctx.beginPath(); ctx.ellipse(80, 122, 24, 11, -0.35, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(176, 122, 24, 11, 0.35, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#c8a987";
+        ctx.beginPath(); ctx.ellipse(128, 144, 30, 42, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#ede5d8";
+        ctx.beginPath(); ctx.ellipse(128, 162, 16, 22, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#2b2522";
+        ctx.beginPath(); ctx.ellipse(128, 168, 9, 6.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "#2b2522"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(112, 136, 10, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(144, 136, 10, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(122, 136); ctx.lineTo(134, 136); ctx.stroke();
+        ctx.fillStyle = "#1f1b18";
+        ctx.beginPath(); ctx.arc(112, 136, 3.2, 0, Math.PI * 2); ctx.arc(144, 136, 3.2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#232122";
+        ctx.fillRect(105, 52, 46, 44);
+        ctx.beginPath(); ctx.ellipse(128, 96, 34, 7, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#5c534c"; ctx.fillRect(105, 84, 46, 7);
+      }, 1, 1),
+      stainedCraftsman: makeTex(256, 128, (ctx, w, h) => {
+        ctx.fillStyle = "#dcebf2"; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "rgba(134, 174, 138, 0.72)";
+        ctx.fillRect(8, 8, w - 16, 18); ctx.fillRect(8, h - 26, w - 16, 18);
+        ctx.fillStyle = "rgba(218, 175, 96, 0.75)";
+        for (let x = 24; x < w - 24; x += 36) ctx.fillRect(x, 28, 18, h - 56);
+        ctx.fillStyle = "rgba(182, 74, 68, 0.80)";
+        [[10, 10], [w - 24, 10], [10, h - 24], [w - 24, h - 24]].forEach(([rx, ry]) => ctx.fillRect(rx, ry, 14, 14));
+        ctx.strokeStyle = "#2b2826"; ctx.lineWidth = 3.5;
+        ctx.strokeRect(6, 6, w - 12, h - 12);
+        ctx.strokeRect(22, 24, w - 44, h - 48);
+        for (let x = 24; x < w; x += 18) { ctx.beginPath(); ctx.moveTo(x, 6); ctx.lineTo(x, h - 6); ctx.stroke(); }
+        [24, h / 2, h - 24].forEach(y => { ctx.beginPath(); ctx.moveTo(6, y); ctx.lineTo(w - 6, y); ctx.stroke(); });
+      }, 1, 1),
+      farmersMarket: makeTex(256, 72, (ctx, w, h) => {
+        ctx.fillStyle = "#9b8772"; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "rgba(65,50,36,0.28)"; ctx.fillRect(0, h / 2 - 1, w, 2);
+        ctx.fillStyle = "#231e1a";
+        ctx.font = "italic bold 16px Georgia, serif"; ctx.fillText("Farmers", 22, 32);
+        ctx.font = "bold 24px Segoe UI, sans-serif"; ctx.fillText("MARKET", 96, 48);
+      }, 1, 1),
+      cowArt: makeTex(128, 128, (ctx, w, h) => {
+        ctx.fillStyle = "#f2efe9"; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "#dcd6cb";
+        for (let y = 24; y < h; y += 26) ctx.fillRect(0, y, w, 1.5);
+        ctx.fillStyle = "#2a2725";
+        ctx.beginPath(); ctx.ellipse(64, 64, 24, 30, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(30, 48, 16, 8, -0.25, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(98, 48, 16, 8, 0.25, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#f7f5f0";
+        ctx.beginPath(); ctx.ellipse(64, 58, 10, 22, 0.1, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#d8b4ad";
+        ctx.beginPath(); ctx.ellipse(64, 84, 16, 11, 0, 0, Math.PI * 2); ctx.fill();
+      }, 1, 1),
+      queenStripes: makeTex(256, 256, (ctx, w, h) => {
+        for (let x = 0; x < w; x += 32) {
+          ctx.fillStyle = (x / 32) % 2 === 0 ? "#f3efe6" : "#d8c6ae";
+          ctx.fillRect(x, 0, 32, h);
+        }
+      }, 2, 1),
+      buffaloCheck: makeTex(128, 128, (ctx, w, h) => {
+        ctx.fillStyle = "#f4f2ed"; ctx.fillRect(0, 0, w, h);
+        for (let x = 0; x < w; x += 32) {
+          for (let y = 0; y < h; y += 32) {
+            const ix = (x / 32) % 2, iy = (y / 32) % 2;
+            if (ix && iy) { ctx.fillStyle = "#1c1d20"; ctx.fillRect(x, y, 32, 32); }
+            else if (ix || iy) { ctx.fillStyle = "#6c6f75"; ctx.fillRect(x, y, 32, 32); }
+          }
+        }
+      }, 1, 1),
+      redStripePillow: makeTex(128, 128, (ctx, w, h) => {
+        ctx.fillStyle = "#f5f1e9"; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "#b83232";
+        for (let y = 6; y < h; y += 14) ctx.fillRect(0, y, w, 6);
+      }, 1, 1),
+      swRug: makeTex(256, 256, (ctx, w, h) => {
+        ctx.fillStyle = "#3a3836"; ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = "#e8e1d3"; ctx.lineWidth = 6;
+        ctx.strokeRect(10, 10, w - 20, h - 20);
+        ctx.strokeRect(22, 22, w - 44, h - 44);
+        [74, 182].forEach(cy => {
+          ctx.fillStyle = "#e8e1d3";
+          ctx.beginPath(); ctx.moveTo(128, cy - 38); ctx.lineTo(176, cy); ctx.lineTo(128, cy + 38); ctx.lineTo(80, cy); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = "#3a3836";
+          ctx.beginPath(); ctx.moveTo(128, cy - 18); ctx.lineTo(150, cy); ctx.lineTo(128, cy + 18); ctx.lineTo(106, cy); ctx.closePath(); ctx.fill();
+        });
+      }, 1, 1),
+      aidwaySign: makeTex(256, 96, (ctx, w, h) => {
+        ctx.fillStyle = "#1c5b3d"; ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = "#f4f2ec"; ctx.lineWidth = 4; ctx.strokeRect(5, 5, w - 10, h - 10);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 25px Segoe UI, sans-serif"; ctx.fillText("AIDWAY LN", 22, 42);
+        ctx.font = "600 15px Segoe UI, sans-serif"; ctx.fillStyle = "#d9f2e4";
+        ctx.fillText("Lake Cle Elum Beach 5m →", 22, 74);
       }, 1, 1)
     };
 
@@ -1507,8 +1649,21 @@
       couchBeige: new THREE.MeshStandardMaterial({ color: 0xdfd6c7, roughness: 0.85 }),
       couchGray: new THREE.MeshStandardMaterial({ color: 0x8a8d91, roughness: 0.85 }),
       patioBlue: new THREE.MeshStandardMaterial({ color: 0x3b4d6b, roughness: 0.8 }),
-      darkWood: new THREE.MeshStandardMaterial({ color: 0x3d2618, roughness: 0.6 }),
-      cherryWood: new THREE.MeshStandardMaterial({ color: 0x8c4526, roughness: 0.55 }),
+      darkWood: new THREE.MeshStandardMaterial({ color: 0x3d2618, roughness: 0.54 }),
+      mahogany: new THREE.MeshStandardMaterial({ color: 0x3b1810, roughness: 0.40, metalness: 0.08 }),
+      cherryWood: new THREE.MeshStandardMaterial({ color: 0x6f3119, roughness: 0.48 }),
+      brass: new THREE.MeshStandardMaterial({ color: 0xc99e52, roughness: 0.30, metalness: 0.74 }),
+      acrylicGhost: new THREE.MeshStandardMaterial({ color: 0xeef7fc, transparent: true, opacity: 0.36, roughness: 0.08, metalness: 0.14 }),
+      stainedGlass: new THREE.MeshBasicMaterial({ map: TEX.stainedCraftsman, transparent: true, opacity: 0.90 }),
+      stagArt: new THREE.MeshStandardMaterial({ map: TEX.stagPortrait, roughness: 0.78 }),
+      farmersSign: new THREE.MeshStandardMaterial({ map: TEX.farmersMarket, roughness: 0.85 }),
+      cowCanvas: new THREE.MeshStandardMaterial({ map: TEX.cowArt, roughness: 0.82 }),
+      queenStripe: new THREE.MeshStandardMaterial({ map: TEX.queenStripes, roughness: 0.84 }),
+      buffaloPillow: new THREE.MeshStandardMaterial({ map: TEX.buffaloCheck, roughness: 0.86 }),
+      redStripe: new THREE.MeshStandardMaterial({ map: TEX.redStripePillow, roughness: 0.86 }),
+      swDiningRug: new THREE.MeshStandardMaterial({ map: TEX.swRug, roughness: 0.90 }),
+      wovenBasket: new THREE.MeshStandardMaterial({ color: 0x706c66, roughness: 0.92 }),
+      aidwayBlade: new THREE.MeshStandardMaterial({ map: TEX.aidwaySign, roughness: 0.42 }),
       iron: new THREE.MeshStandardMaterial({ color: 0x242424, roughness: 0.48, metalness: 0.5 }),
       pineTrunk: new THREE.MeshStandardMaterial({ map: TEX.pineBark, roughness: 0.92 }),
       pineNeedles: new THREE.MeshStandardMaterial({ color: 0x2b4b2c, roughness: 0.88 }),
@@ -1716,53 +1871,153 @@
       }
     }
 
+    let foldOutOpen = false;
+    let foldOutExtGroup = null;
+
+    function makePlushPillow(w, h, d, mat, x, y, z, rotX, rotZ, parent, roomId = null) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.5, 14, 10), mat);
+      m.scale.set(w, h, d);
+      m.position.set(x, y, z);
+      m.rotation.set(rotX, 0, rotZ);
+      m.castShadow = true;
+      if (roomId) { m.userData.roomId = roomId; pickables.push(m); }
+      parent.add(m);
+      return m;
+    }
+
+    function addSculptedSofa(parent, roomId, x, yBase, z, rotY, seatW, seatD, cushions, fabricMat, pillowSpecs = []) {
+      const sg = new THREE.Group();
+      sg.position.set(x, yBase, z);
+      sg.rotation.y = rotY;
+      // Tailored base plinth + skirt
+      box(seatW + 0.72, 0.52, seatD, fabricMat, 0, 0.28, 0, sg, roomId);
+      // Angled plush backrest + top rounded bolster
+      const back = box(seatW + 0.68, 1.48, 0.52, fabricMat, 0, 1.22, -seatD * 0.5 + 0.24, sg, roomId);
+      back.rotation.x = -0.10;
+      const topRoll = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, seatW + 0.66, 12), fabricMat);
+      topRoll.rotation.z = Math.PI / 2;
+      topRoll.position.set(0, 1.92, -seatD * 0.5 + 0.17);
+      sg.add(topRoll);
+      // Individual plump seat & back cushions (eliminates flat Minecraft blocks!)
+      const cw = seatW / cushions;
+      for (let i = 0; i < cushions; i++) {
+        const cx = -seatW * 0.5 + cw * (i + 0.5);
+        box(cw - 0.07, 0.42, seatD - 0.48, fabricMat, cx, 0.74, 0.20, sg, roomId);
+        const bc = box(cw - 0.08, 1.05, 0.38, fabricMat, cx, 1.38, -seatD * 0.5 + 0.56, sg, roomId);
+        bc.rotation.x = -0.14;
+      }
+      // Sculpted rolled cylindrical armrests on both ends!
+      [-seatW * 0.5 - 0.22, seatW * 0.5 + 0.22].forEach(ax => {
+        box(0.44, 0.92, seatD - 0.10, fabricMat, ax, 0.74, 0.02, sg, roomId);
+        const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, seatD - 0.06, 12), fabricMat);
+        roll.rotation.x = Math.PI / 2;
+        roll.position.set(ax, 1.22, 0.02);
+        roll.castShadow = true;
+        sg.add(roll);
+      });
+      // Realistic plump tilted throw pillows!
+      pillowSpecs.forEach(([px, pMat, tiltZ = 0.18]) => {
+        makePlushPillow(0.95, 0.88, 0.36, pMat, px, 1.24, -seatD * 0.5 + 0.84, -0.28, tiltZ, sg, roomId);
+      });
+      parent.add(sg);
+      return sg;
+    }
+
     function createDetailedBed(b, parent, localY) {
       const g = new THREE.Group();
       g.position.set(b.pos[0], localY, b.pos[2]);
       g.rotation.y = b.rotY || 0;
       const [bw, bh, bd] = b.size;
-      const isIron = (b.id === "queen_dn" || b.id === "queen_e2");
-      const frameMat = isIron ? MAT.iron : (b.id === "nook_up" ? MAT.knottyPine : (b.id === "fold_up" ? MAT.couchGray : MAT.darkWood));
 
-      box(bw + 0.22, 0.44, bd + 0.22, frameMat, 0, -0.15, 0, g, b.room);
-      if (b.id !== "fold_up") {
-        if (isIron) {
-          // Wrought-iron spindle headboard & footboard (exact match to B4 & C5!)
-          box(bw + 0.3, 0.14, 0.16, MAT.iron, 0, 1.95, -bd / 2 - 0.06, g, b.room);
-          box(bw + 0.3, 0.14, 0.16, MAT.iron, 0, 0.95, -bd / 2 - 0.06, g, b.room);
-          for (let sx = -bw / 2; sx <= bw / 2 + 0.01; sx += 0.65) {
-            box(0.09, 2.1, 0.09, MAT.iron, sx, 0.9, -bd / 2 - 0.06, g, b.room);
-            box(0.09, 1.35, 0.09, MAT.iron, sx, 0.5, bd / 2 + 0.06, g, b.room);
-          }
-          box(bw + 0.3, 0.14, 0.16, MAT.iron, 0, 1.18, bd / 2 + 0.06, g, b.room);
-        } else {
-          box(bw + 0.35, 2.4, 0.26, frameMat, 0, 0.9, -bd / 2 - 0.08, g, b.room);
-          if (b.id === "king_up") box(bw + 0.35, 1.3, 0.22, frameMat, 0, 0.32, bd / 2 + 0.08, g, b.room);
+      if (b.id === "king_up") {
+        // Photo fad90698: Solid Dark-Mahogany Sleigh Panel Headboard & Footboard w/ Brass Nailhead Trim + Buffalo-Gingham Duvet!
+        box(bw + 0.24, 0.48, bd + 0.24, MAT.mahogany, 0, -0.14, 0, g, b.room);
+        // Tall recessed-panel mahogany headboard + brass nailhead perimeter
+        box(bw + 0.36, 2.55, 0.24, MAT.mahogany, 0, 0.95, -bd / 2 - 0.10, g, b.room);
+        box(bw - 0.20, 1.90, 0.28, MAT.darkWood, 0, 0.92, -bd / 2 - 0.09, g, b.room, false);
+        // Sleigh footboard + brass nailhead trim!
+        box(bw + 0.36, 1.38, 0.22, MAT.mahogany, 0, 0.36, bd / 2 + 0.10, g, b.room);
+        box(bw - 0.24, 0.88, 0.26, MAT.darkWood, 0, 0.36, bd / 2 + 0.10, g, b.room, false);
+        for (let nx = -bw / 2 + 0.2; nx <= bw / 2 - 0.19; nx += 0.38) {
+          box(0.05, 0.05, 0.29, MAT.brass, nx, 1.88, -bd / 2 - 0.09, g, b.room, false);
+          box(0.05, 0.05, 0.27, MAT.brass, nx, 0.82, bd / 2 + 0.10, g, b.room, false);
         }
-      } else {
-        // Gray Fold-Out Twin Loveseat with teal/dark accent throw pillows (C2 right!)
-        box(bw + 0.35, 1.85, 0.45, MAT.couchGray, 0, 0.65, -bd / 2 - 0.15, g, b.room);
-        box(0.36, 1.35, bd * 0.72, MAT.couchGray, -bw / 2 - 0.15, 0.38, -bd * 0.08, g, b.room);
-        box(0.36, 1.35, bd * 0.72, MAT.couchGray, bw / 2 + 0.15, 0.38, -bd * 0.08, g, b.room);
-        box(bw * 0.55, 0.45, 0.4, MAT.turquoiseCab, 0.3, 0.85, -bd * 0.32, g, b.room);
+      } else if (b.id === "queen_e1" || b.id === "queen_e2") {
+        // Photo b39ab445: Tailored Cream Bed-Skirted Platform Beds with NO Headboards/Footboards!
+        box(bw + 0.12, 0.56, bd + 0.12, MAT.couchBeige, 0, -0.18, 0, g, b.room);
+      } else if (b.id === "queen_dn") {
+        // Photo 3b3ed697: Authentic Matte-Black Wrought-Iron Spindle Headboard & Footboard!
+        box(bw + 0.20, 0.44, bd + 0.20, MAT.iron, 0, -0.15, 0, g, b.room);
+        box(bw + 0.30, 0.12, 0.14, MAT.iron, 0, 1.98, -bd / 2 - 0.06, g, b.room);
+        box(bw + 0.30, 0.10, 0.14, MAT.iron, 0, 0.95, -bd / 2 - 0.06, g, b.room);
+        for (let sx = -bw / 2; sx <= bw / 2 + 0.01; sx += 0.64) {
+          box(0.08, 2.1, 0.08, MAT.iron, sx, 0.92, -bd / 2 - 0.06, g, b.room);
+          box(0.08, 1.25, 0.08, MAT.iron, sx, 0.48, bd / 2 + 0.06, g, b.room);
+        }
+        box(bw + 0.30, 0.12, 0.14, MAT.iron, 0, 1.12, bd / 2 + 0.06, g, b.room);
+      } else if (b.id === "nook_up") {
+        // Photo 7e39af74 center: Built-In White Platform Nook w/ 2 Open Cubbies & Woven Grey Toy Baskets Underneath!
+        box(bw + 0.12, 0.16, bd + 0.10, MAT.couchWhite, 0, 0.02, 0, g, b.room);
+        box(0.14, 0.58, bd * 0.85, MAT.couchWhite, 0, -0.32, 0, g, b.room, false); // Center cubby divider
+        [-bw * 0.24, bw * 0.24].forEach(bx => {
+          box(bw * 0.38, 0.42, 1.55, MAT.wovenBasket, bx, -0.38, bd * 0.24, g, b.room, false);
+          box(bw * 0.34, 0.08, 1.45, MAT.couchWhite, bx, -0.16, bd * 0.24, g, b.room, false); // White basket trim
+        });
+      } else if (b.id === "fold_up") {
+        // Photo 7e39af74 right: Sculpted Grey Twin Sleeper Loveseat + Tan Pillow + Teal/Black Throw + Interactive Fold-Out Mattress!
+        box(bw + 0.26, 0.52, bd * 0.66, MAT.couchGray, 0, -0.14, -bd * 0.14, g, b.room);
+        const fBack = box(bw + 0.26, 1.55, 0.42, MAT.couchGray, 0, 0.72, -bd * 0.44, g, b.room);
+        fBack.rotation.x = -0.08;
+        box(bw - 0.36, 0.38, bd * 0.54, MAT.couchGray, 0, 0.28, -bd * 0.10, g, b.room); // Piped seat cushion
+        [-bw / 2 - 0.04, bw / 2 + 0.04].forEach(ax => {
+          box(0.34, 1.22, bd * 0.66, MAT.couchGray, ax, 0.36, -bd * 0.14, g, b.room); // Crisp track arms!
+        });
+        // Draped teal waffle throw + black accent + tan pillow (exact match to 7e39af74!)
+        box(bw * 0.56, 0.68, 0.48, MAT.turquoiseCab, -0.55, 1.18, -bd * 0.38, g, b.room, false);
+        box(bw * 0.54, 0.52, 0.46, MAT.iron, -0.55, 0.82, -bd * 0.32, g, b.room, false);
+        makePlushPillow(0.92, 0.82, 0.36, MAT.knottyPine, 1.15, 0.78, -bd * 0.28, -0.22, -0.16, g, b.room);
+
+        // Interactive Unfolding Twin Sleeper Extension (local +Z = world North -Z because rotY = Math.PI!)
+        foldOutExtGroup = new THREE.Group();
+        foldOutExtGroup.visible = false;
+        box(3.35, 0.36, 4.15, MAT.couchWhite, 0, 0.16, 2.35, foldOutExtGroup, b.room);
+        box(3.40, 0.08, 3.85, MAT.plaid, 0, 0.36, 2.48, foldOutExtGroup, b.room, false);
+        // Subtle metal sleeper support legs + dashed floor clearance outline
+        [[-1.45, 4.1], [1.45, 4.1], [-1.45, 2.1], [1.45, 2.1]].forEach(([lx, lz]) => {
+          box(0.10, 0.52, 0.10, MAT.iron, lx, -0.26, lz, foldOutExtGroup, null, false);
+        });
+        makePlushPillow(1.35, 0.34, 0.85, MAT.whiteAppliance, 0, 0.52, -0.35, 0.14, 0, foldOutExtGroup, b.room);
+        g.add(foldOutExtGroup);
       }
 
-      // Crisp natural white/plaid comforter + family-colored foot runner blanket!
-      const mainQuilt = b.id === "king_up" ? MAT.plaid : MAT.couchWhite;
-      box(bw, 0.54, bd, mainQuilt, 0, 0.35, 0, g, b.room);
+      // Main Comforter + Crisp Folded White Top-Sheet Collar + Family-Colored Foot Runner!
       const runnerMat = new THREE.MeshStandardMaterial({ color: 0xdcd6cc, roughness: 0.78 });
-      const runner = box(bw + 0.08, 0.58, bd * 0.38, runnerMat, 0, 0.38, bd * 0.28, g, b.room);
-      runner.userData.bedId = b.id;
+      let runner;
+      if (b.id === "fold_up") {
+        // Family color badge cushion on front of sleeper loveseat (and across foot of unfolded mattress!)
+        runner = box(bw - 0.5, 0.16, 0.85, runnerMat, 0, 0.49, 0.02, g, b.room);
+        g.traverse(ch => {
+          if (ch.isMesh) {
+            ch.userData.propAction = "toggle_foldout";
+            ch.userData.bedId = b.id;
+            if (!pickables.includes(ch)) pickables.push(ch);
+          }
+        });
+      } else {
+        const mainQuilt = b.id === "king_up" ? MAT.plaid : ((b.id === "queen_e1" || b.id === "queen_e2") ? MAT.queenStripe : MAT.couchWhite);
+        box(bw, 0.54, bd, mainQuilt, 0, 0.35, 0, g, b.room);
+        // Folded crisp white sheet collar near pillows!
+        box(bw + 0.04, 0.57, bd * 0.18, MAT.whiteAppliance, 0, 0.36, -bd * 0.22, g, b.room, false);
+        runner = box(bw + 0.06, 0.58, bd * 0.26, runnerMat, 0, 0.38, bd * 0.34, g, b.room);
+        runner.userData.bedId = b.id;
 
-      if (b.id !== "fold_up") {
         const pCount = bw > 4.4 ? 2 : 1;
         for (let i = 0; i < pCount; i++) {
           const px = pCount === 1 ? 0 : (i === 0 ? -bw * 0.24 : bw * 0.24);
-          const pil = box(bw / pCount - 0.42, 0.30, 1.15, MAT.whiteAppliance, px, 0.74, -bd * 0.35, g, b.room);
-          pil.rotation.x = 0.16;
+          makePlushPillow(bw / pCount - 0.36, 0.38, 1.05, MAT.whiteAppliance, px, 0.74, -bd * 0.36, 0.20, 0, g, b.room);
         }
-        // Center accent lumbar pillow
-        box(1.4, 0.34, 0.65, MAT.granite, 0, 0.78, -bd * 0.22, g, b.room);
+        // Center diamond/chevron accent pillow (exact match to fad90698 & b39ab445!)
+        makePlushPillow(1.15, 0.78, 0.42, b.id === "nook_up" ? MAT.buffaloPillow : MAT.plaid, 0, 0.86, -bd * 0.24, -0.24, 0, g, b.room);
       }
 
       parent.add(g);
@@ -2150,6 +2405,16 @@
     box(0.52, 5.4, 0.52, MAT.pineTrunk, 22.8, 2.7, 26.2, siteGroup);
     box(0.85, 1.55, 0.45, MAT.stainless, 22.8, 3.8, 26.52, siteGroup);
 
+    // Authentic "AIDWAY LN • Lake Cle Elum Beach 5m →" Street & Trailhead Signpost at Driveway Entrance (Photo #22 b92a05c9!)
+    const signGrp = new THREE.Group();
+    signGrp.position.set(21.8, 0, 38.5);
+    signGrp.rotation.y = -0.35;
+    box(0.32, 6.8, 0.32, MAT.pineTrunk, 0, 3.4, 0, signGrp, "lake_beach");
+    const signBlade = box(3.1, 1.15, 0.14, MAT.aidwayBlade, 0.65, 6.15, 0, signGrp, "lake_beach");
+    const signArrow = box(2.4, 0.52, 0.14, MAT.knottyPine, 0.45, 5.15, 0, signGrp, "lake_beach");
+    [signBlade, signArrow].forEach(sm => { sm.userData.propAction = "lake_beach"; });
+    siteGroup.add(signGrp);
+
     // --- TOWERING EASTERN-CASCADE PONDEROSA PINES (Feathery jagged conifer boughs — zero lollipop spheres!) ---
     const deepFoliageMats = [
       new THREE.MeshStandardMaterial({ color: 0x1f3a21, roughness: 0.92, flatShading: true }),
@@ -2373,21 +2638,21 @@
     box(0.32, 0.75, 0.75, MAT.stainless, 24.22, 4.2, 5.8, mainFloorGroup, null, false); // Stainless direct-vent fireplace cap (#2!)
     [[-21.75, -13.75], [21.75, -13.75], [-21.75, 13.75], [21.75, 13.75]].forEach(([cx, cz]) => addLogCorners(cx, cz, WALL_H, 0.6, mainFloorGroup));
 
-    // Full-Height 6.8ft Craftsman Double Front Doors pivoted on true outer hinges (X=4.84 & X=9.16) swinging cleanly inward (-Z) out of the 4.4ft entrance!
+    // Full-Height 6.8ft Craftsman Double Front Doors w/ Stained-Glass Transoms + Slate Entry Mat (Photo fe50fe0a!)
+    box(4.8, 0.04, 2.2, MAT.couchBeige, 7.0, 0.64, 12.1, mainFloorGroup, "entry", false); // Woven cream indoor entry mat on slate pad!
     [ [4.84, 1.54, 0.98], [9.16, -1.54, -0.98] ].forEach(([dx, rot, leafOff]) => {
       const dg = new THREE.Group();
       dg.position.set(dx, 2.75, 13.42);
       dg.rotation.y = rot;
       box(1.96, 4.3, 0.18, MAT.darkDoor, leafOff, 0, 0, dg, null, false);
-      box(0.10, 0.42, 0.28, MAT.iron, leafOff * 1.72, 0.55, 0, dg, null, false);
+      [-0.52, 0, 0.52].forEach(px => box(0.36, 2.6, 0.21, MAT.mahogany, leafOff + px, -0.25, 0, dg, null, false)); // 3 vertical Craftsman panels!
+      box(0.10, 0.42, 0.28, MAT.brass, leafOff * 1.72, 0.55, 0, dg, null, false);
       mainFloorGroup.add(dg);
       const dgTop = new THREE.Group();
       dgTop.position.set(dx, 6.15, 13.42);
       dgTop.rotation.y = rot;
       box(1.96, 2.55, 0.18, MAT.darkDoor, leafOff, 0, 0, dgTop, null, false);
-      box(1.42, 1.85, 0.22, MAT.glass, leafOff, 0.05, 0, dgTop, null, false);
-      box(1.46, 0.09, 0.24, MAT.darkDoor, leafOff, 0.05, 0, dgTop, null, false);
-      box(0.09, 1.88, 0.24, MAT.darkDoor, leafOff, 0.05, 0, dgTop, null, false);
+      box(1.46, 1.28, 0.23, MAT.stainedGlass, leafOff, 0.22, 0, dgTop, null, false); // Leaded Craftsman stained-glass transom!
       walkMainEnclosureGroup.add(dgTop);
     });
 
@@ -2580,32 +2845,87 @@
     mainFloorGroup.add(stairRail);
     // East guardrail blocks walking through the side of the stairs while leaving East starter steps (Z = 9.8..13.4) open to climb!
     addCollider(1, 4.05, 2.4, 4.05, 9.7);
-    // Detailed Black Slatted Bench + Striped Pillow + Pedestal Table under Stairs (A6!)
-    box(1.5, 0.18, 3.6, MAT.darkDoor, 2.2, 1.55, 4.8, mainFloorGroup, "entry");
-    box(0.18, 1.7, 3.6, MAT.darkDoor, 1.5, 2.4, 4.8, mainFloorGroup, "entry");
-    box(0.2, 1.5, 0.2, MAT.darkDoor, 2.85, 0.85, 3.1, mainFloorGroup, "entry");
-    box(0.2, 1.5, 0.2, MAT.darkDoor, 2.85, 0.85, 6.5, mainFloorGroup, "entry");
-    box(0.45, 0.65, 1.4, MAT.usFlag, 1.85, 1.95, 4.8, mainFloorGroup, "entry"); // Striped pillow!
-    const bistroTop = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.14, 18), MAT.logBeam);
-    bistroTop.position.set(3.85, 2.45, 4.8);
+    // Detailed Tufted Black Settee Bench + Red-Striped Pom-Pom Pillows + Pedestal Table + "Farmers MARKET" Sign + Cow Art + Wire Pendant under Stairs (Photo f127dde2!)
+    box(1.55, 0.28, 3.8, MAT.iron, 2.2, 1.55, 4.8, mainFloorGroup, "entry");
+    box(0.24, 1.95, 3.8, MAT.iron, 1.5, 2.52, 4.8, mainFloorGroup, "entry");
+    box(1.55, 1.75, 0.18, MAT.iron, 2.2, 2.40, 2.95, mainFloorGroup, "entry"); // Wingback side arms!
+    box(1.55, 1.75, 0.18, MAT.iron, 2.2, 2.40, 6.65, mainFloorGroup, "entry");
+    [ [0.2, 1.5, 3.05], [0.2, 1.5, 6.55] ].forEach(([lw, lh, lz]) => box(lw, lh, lw, MAT.iron, 2.85, 0.85, lz, mainFloorGroup, "entry"));
+    makePlushPillow(0.42, 0.72, 1.35, MAT.redStripe, 1.88, 2.02, 4.10, 0, 0.12, mainFloorGroup, "entry");
+    makePlushPillow(0.42, 0.72, 1.35, MAT.redStripe, 1.88, 2.02, 5.50, 0, 0.12, mainFloorGroup, "entry");
+    box(0.85, 0.85, 0.95, MAT.knottyPine, 2.15, 1.02, 8.15, mainFloorGroup, "entry"); // Wood step-cube beside woven basket (f127dde2!)
+    // Weathered "Farmers MARKET" sign + Cow canvas + Hanging geometric wire pendant under stairs!
+    box(0.10, 0.78, 2.75, MAT.farmersSign, 1.24, 4.35, 4.8, walkMainEnclosureGroup, null, false);
+    box(0.10, 1.05, 1.05, MAT.cowCanvas, 1.24, 5.45, 2.65, walkMainEnclosureGroup, null, false);
+    box(0.04, 1.05, 0.04, MAT.iron, 2.65, 5.65, 4.8, walkMainEnclosureGroup, null, false);
+    const underStairCage = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.52, 6, 1, true), new THREE.MeshStandardMaterial({ color: 0x2b2623, wireframe: true }));
+    underStairCage.position.set(2.65, 4.95, 4.8); walkMainEnclosureGroup.add(underStairCage);
+    const underStairBulb = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), MAT.warmBulb);
+    underStairBulb.position.set(2.65, 4.92, 4.8); walkMainEnclosureGroup.add(underStairBulb);
+    addWarmHalo(2.65, 4.90, 4.8, 1.8, walkMainEnclosureGroup, 0xffcc88, 0.54);
+    const bistroTop = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.14, 18), MAT.logBeam);
+    bistroTop.position.set(3.75, 2.45, 4.8);
     mainFloorGroup.add(bistroTop);
-    const bistroLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.45, 1.85, 10), MAT.iron);
-    bistroLeg.position.set(3.85, 1.5, 4.8);
+    const bistroLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.42, 1.85, 10), MAT.couchBeige);
+    bistroLeg.position.set(3.75, 1.5, 4.8);
     mainFloorGroup.add(bistroLeg);
 
-    // --- Dining & Kitchen Furniture (A8-A11) ---
-    box(7.2, 0.05, 9.8, MAT.rug, 15.2, 0.63, 5.8, mainFloorGroup, "dining", false);
-    box(3.8, 0.22, 8.0, MAT.darkWood, 15.2, 2.95, 5.8, mainFloorGroup, "dining");
-    [[-1.5, -3.2], [1.5, -3.2], [-1.5, 3.2], [1.5, 3.2]].forEach(([lx, lz]) => {
-      box(0.25, 2.3, 0.25, MAT.darkWood, 15.2 + lx, 1.75, 5.8 + lz, mainFloorGroup, "dining");
+    // --- Dining & Kitchen Furniture: Trestle Table, 6 Acrylic Ghost Chairs + 2 Nailhead Host Chairs, Stag Portrait & Fairy-Light Tree (Photos fe50fe0a & f127dde2!) ---
+    box(7.4, 0.05, 10.2, MAT.swDiningRug, 15.2, 0.63, 5.8, mainFloorGroup, "dining", false);
+    box(3.7, 0.22, 8.2, MAT.darkWood, 15.2, 2.95, 5.8, mainFloorGroup, "dining");
+    // Carved dark-wood double-pedestal trestle legs + stretcher beam (fe50fe0a!)
+    [-2.5, 2.5].forEach(pz => {
+      const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.44, 2.15, 10), MAT.mahogany);
+      ped.position.set(15.2, 1.82, 5.8 + pz); mainFloorGroup.add(ped);
+      box(2.1, 0.18, 0.38, MAT.mahogany, 15.2, 0.72, 5.8 + pz, mainFloorGroup, "dining");
     });
-    [-2.5, 0, 2.5].forEach(dz => {
-      box(1.4, 1.4, 1.4, MAT.couchBeige, 12.7, 1.35, 5.8 + dz, mainFloorGroup, "dining");
-      box(0.2, 1.6, 1.4, MAT.couchBeige, 12.05, 2.2, 5.8 + dz, mainFloorGroup, "dining");
-      box(1.4, 1.4, 1.4, MAT.couchBeige, 17.7, 1.35, 5.8 + dz, mainFloorGroup, "dining");
-      box(0.2, 1.6, 1.4, MAT.couchBeige, 18.35, 2.2, 5.8 + dz, mainFloorGroup, "dining");
+    box(0.24, 0.20, 5.2, MAT.mahogany, 15.2, 0.92, 5.8, mainFloorGroup, "dining");
+    // 6 Translucent Curved-Medallion "Ghost" Side Chairs (3 on West, 3 on East — Photo f127dde2!)
+    [-2.4, 0, 2.4].forEach(dz => {
+      [ [12.85, 1], [17.55, -1] ].forEach(([cx, dir]) => {
+        const gc = new THREE.Group();
+        gc.position.set(cx, 0.60, 5.8 + dz);
+        box(1.32, 0.10, 1.32, MAT.acrylicGhost, 0, 1.48, 0, gc, "dining", false);
+        [[-0.56, -0.56], [0.56, -0.56], [-0.56, 0.56], [0.56, 0.56]].forEach(([lx, lz]) => {
+          box(0.09, 1.48, 0.09, MAT.acrylicGhost, lx, 0.74, lz, gc, "dining", false);
+        });
+        const medBack = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.56, 0.08, 16), MAT.acrylicGhost);
+        medBack.rotation.z = Math.PI / 2;
+        medBack.scale.set(1.35, 1, 0.95);
+        medBack.position.set(-dir * 0.64, 2.48, 0);
+        gc.add(medBack);
+        mainFloorGroup.add(gc);
+      });
     });
-    // Full-Height Stone Fireplace + Interactive Hearth Flames + Mantel + Framed Art Above (A8, A9)
+    // 2 Tall Beige Upholstered Host Chairs with Brass Nailhead Trim at North & South Ends of Table (fe50fe0a & f127dde2!)
+    [ [1.15, -1], [10.45, 1] ].forEach(([hz, dir]) => {
+      const hc = new THREE.Group();
+      hc.position.set(15.2, 0.60, hz);
+      box(1.68, 0.34, 1.65, MAT.couchBeige, 0, 1.48, 0, hc, "dining");
+      box(1.68, 2.05, 0.28, MAT.couchBeige, 0, 2.58, dir * 0.72, hc, "dining");
+      [-0.78, 0.78].forEach(nx => {
+        for (let ny = 1.75; ny <= 3.45; ny += 0.28) box(0.05, 0.05, 0.31, MAT.brass, nx, ny, dir * 0.72, hc, null, false);
+      });
+      [[-0.70, -0.68], [0.70, -0.68], [-0.70, 0.68], [0.70, 0.68]].forEach(([lx, lz]) => {
+        box(0.14, 1.35, 0.14, MAT.knottyPine, lx, 0.68, lz, hc, "dining");
+      });
+      mainFloorGroup.add(hc);
+    });
+    // Everyday Table Setting: 8 Round Woven Placemats + Crisp White Dinner Plates + Potted Green Grass Centerpiece!
+    const everydayTableGroup = new THREE.Group();
+    [ [14.15, 3.4], [14.15, 5.8], [14.15, 8.2], [16.25, 3.4], [16.25, 5.8], [16.25, 8.2], [15.2, 2.35], [15.2, 9.25] ].forEach(([px, pz]) => {
+      const pmat = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, 0.02, 16), MAT.couchBeige);
+      pmat.position.set(px, 3.07, pz); everydayTableGroup.add(pmat);
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.40, 0.34, 0.04, 16), MAT.whiteAppliance);
+      plate.position.set(px, 3.10, pz); everydayTableGroup.add(plate);
+    });
+    const grassPot = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.20, 0.38, 12), MAT.whiteAppliance);
+    grassPot.position.set(15.2, 3.25, 5.8); everydayTableGroup.add(grassPot);
+    const grassBlades = new THREE.Mesh(new THREE.ConeGeometry(0.42, 1.05, 10), MAT.pineNeedlesAlt);
+    grassBlades.position.set(15.2, 3.85, 5.8); everydayTableGroup.add(grassBlades);
+    mainFloorGroup.add(everydayTableGroup);
+
+    // Full-Height Stacked-Stone Fireplace + Peeled-Log Mantel + Whimsical Stag-in-Top-Hat Portrait + Glowing SE Fairy-Light Tree!
     const dinStoneHearth = box(1.8, 4.6, 4.6, MAT.stone, 20.6, 2.9, 5.8, mainFloorGroup, "dining");
     dinStoneHearth.userData.propAction = "din_fire";
     const dinFirebox = box(1.2, 1.8, 2.4, MAT.iron, 19.8, 1.6, 5.8, mainFloorGroup, "dining");
@@ -2613,12 +2933,32 @@
     const dinFlameMesh = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.15, 8), new THREE.MeshBasicMaterial({ color: 0xff7722 }));
     dinFlameMesh.position.set(19.45, 1.35, 5.8);
     mainFloorGroup.add(dinFlameMesh);
-    // Hearth firewood logs + warm fireplace bloom + framed mountain landscape painting above mantel
     box(0.32, 0.28, 1.5, MAT.pineTrunk, 19.55, 0.92, 5.8, mainFloorGroup, "dining", false);
     addWarmHalo(19.25, 1.45, 5.8, 3.0, mainFloorGroup, 0xff8a36, 0.65);
     box(2.1, 0.32, 5.0, MAT.logBeam, 20.4, 4.1, 5.8, mainFloorGroup, "dining");
-    box(0.18, 2.35, 2.75, MAT.darkWood, 21.28, 6.2, 5.8, walkMainEnclosureGroup, null, false);
-    box(0.22, 1.95, 2.35, MAT.birchWall, 21.24, 6.2, 5.8, walkMainEnclosureGroup, null, false);
+    // Potted green boxwood topiary on left of mantel + Stag-in-Top-Hat portrait centered above mantel (Photo fe50fe0a!)
+    box(0.32, 0.36, 0.32, MAT.whiteAppliance, 20.1, 4.44, 4.05, mainFloorGroup, "dining", false);
+    const mantelPlant = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.78, 9), MAT.pineNeedlesAlt);
+    mantelPlant.position.set(20.1, 4.95, 4.05); mainFloorGroup.add(mantelPlant);
+    box(0.16, 2.55, 2.25, MAT.couchBeige, 21.28, 5.75, 5.8, walkMainEnclosureGroup, null, false);
+    box(0.20, 2.42, 2.12, MAT.stagArt, 21.24, 5.75, 5.8, walkMainEnclosureGroup, null, false);
+    // Glowing White Decorative Fairy-Light Tree in SE Dining Corner (X = 19.8, Z = 12.0 — Photo fe50fe0a & f127dde2!)
+    const fairyTreeGrp = new THREE.Group();
+    fairyTreeGrp.position.set(19.8, 0.60, 12.0);
+    const ftTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.14, 4.8, 8), MAT.whiteAppliance);
+    ftTrunk.position.y = 2.4; fairyTreeGrp.add(ftTrunk);
+    for (let fb = 0; fb < 8; fb++) {
+      const ang = (fb / 8) * Math.PI * 2;
+      const br = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.04, 2.1, 6), MAT.whiteAppliance);
+      br.position.set(Math.cos(ang) * 0.42, 3.8 + (fb % 3) * 0.45, Math.sin(ang) * 0.42);
+      br.rotation.set(Math.sin(ang) * 0.52, 0, -Math.cos(ang) * 0.52);
+      fairyTreeGrp.add(br);
+      const tw = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), MAT.warmBulb);
+      tw.position.set(Math.cos(ang) * 0.78, 4.5 + (fb % 3) * 0.42, Math.sin(ang) * 0.78);
+      fairyTreeGrp.add(tw);
+    }
+    walkMainEnclosureGroup.add(fairyTreeGrp);
+    addWarmHalo(19.8, 4.6, 12.0, 2.2, walkMainEnclosureGroup, 0xffe4b0, 0.52);
 
     // Kitchen Shaker Cabinets, Speckled Granite Peninsula, Gooseneck Faucet, Coffee Maker, SS Range + Microwave + Fridge
     box(8.4, 2.9, 2.6, MAT.shakerCab, 16.9, 2.05, -1.2, mainFloorGroup, "kitchen");
@@ -2685,40 +3025,66 @@
       mainFloorGroup.add(leg);
     });
 
-    // Forensic-Exact Sunken Rectangular Living Room (X = -21.75..-9.2, Z = -13.75..+2.8, Floor Y = 0.24 — Photos #5 & #6!)
+    // Forensic-Exact Sunken Rectangular Living Room: Dark-Mahogany Paneled TV Console + Sculpted Rolled-Arm Sofas & Armchairs (Photo b101aaca!)
     box(8.8, 0.05, 8.8, MAT.rug, -15.4, 0.27, -6.8, mainFloorGroup, "living", false);
-    const livConsoleMesh = box(4.6, 2.3, 1.5, MAT.cherryWood, -15.6, 1.4, -12.6, mainFloorGroup, "living");
+    // Rich Dark-Mahogany Paneled Fireplace Credenza w/ Overhanging Crown, Side Doors, Brass Knobs & Media Shelf (replaces orange block!)
+    const livConsoleMesh = box(4.6, 2.05, 1.48, MAT.mahogany, -15.6, 1.32, -12.6, mainFloorGroup, "living");
     livConsoleMesh.userData.propAction = "liv_fire";
-    const livFireGlass = box(2.0, 1.25, 0.14, MAT.iron, -15.6, 1.25, -11.82, mainFloorGroup, "living", false);
+    box(4.82, 0.14, 1.62, MAT.mahogany, -15.6, 2.40, -12.58, mainFloorGroup, "living"); // Beveled crown top
+    box(4.76, 0.16, 1.58, MAT.mahogany, -15.6, 0.32, -12.58, mainFloorGroup, "living"); // Base plinth
+    [-1.72, 1.72].forEach((cx, ci) => {
+      box(0.96, 1.42, 0.08, MAT.cherryWood, -15.6 + cx, 1.18, -11.83, mainFloorGroup, "living", false); // Raised cabinet door panel
+      box(0.96, 0.34, 0.08, MAT.cherryWood, -15.6 + cx, 2.08, -11.83, mainFloorGroup, "living", false); // Upper drawer front
+      box(0.07, 0.07, 0.12, MAT.brass, -15.6 + cx + (ci === 0 ? 0.34 : -0.34), 1.22, -11.79, mainFloorGroup, "living", false);
+      box(0.07, 0.07, 0.12, MAT.brass, -15.6 + cx, 2.08, -11.79, mainFloorGroup, "living", false);
+    });
+    box(2.2, 0.34, 1.35, MAT.iron, -15.6, 2.10, -12.50, mainFloorGroup, "living", false); // Open center media bay
+    const livFireGlass = box(2.15, 1.32, 0.14, MAT.iron, -15.6, 1.18, -11.82, mainFloorGroup, "living", false);
     livFireGlass.userData.propAction = "liv_fire";
-    const livFlameMesh = box(1.6, 0.55, 0.16, new THREE.MeshBasicMaterial({ color: 0xf97316 }), -15.6, 0.98, -11.80, mainFloorGroup, "living", false);
+    const livFlameMesh = box(1.65, 0.48, 0.16, new THREE.MeshBasicMaterial({ color: 0xf97316 }), -15.6, 0.92, -11.80, mainFloorGroup, "living", false);
     livFlameMesh.userData.propAction = "liv_fire";
+    box(1.45, 0.18, 0.18, MAT.pineTrunk, -15.6, 0.78, -11.78, mainFloorGroup, "living", false); // Glowing fireplace log grate!
     addWarmHalo(-15.6, 1.05, -11.65, 2.4, mainFloorGroup, 0xff8533, 0.62);
     const livTvFrame = box(3.8, 2.2, 0.16, MAT.iron, -15.6, 3.55, -12.8, mainFloorGroup, "living");
     livTvFrame.userData.propAction = "liv_tv";
     const livTvScreenMesh = box(3.52, 1.98, 0.18, new THREE.MeshBasicMaterial({ map: tvLiveTex }), -15.6, 3.55, -12.74, mainFloorGroup, "living", false);
     livTvScreenMesh.userData.propAction = "liv_tv";
     pickables.push(livTvScreenMesh);
-    // Beige 3-Cushion Sofa + Buffalo-Plaid Pillows on East wall X = -10.8, Z = -12.5..-6.2 (right next to Knotty-Pine Bedroom Door, Photo #5!)
-    box(2.7, 1.35, 6.4, MAT.couchBeige, -10.8, 0.92, -9.4, mainFloorGroup, "living");
-    box(0.6, 1.5, 6.4, MAT.couchBeige, -9.8, 1.82, -9.4, mainFloorGroup, "living");
-    [-11.6, -9.4, -7.2].forEach(pz => box(0.45, 0.85, 0.95, MAT.iron, -10.35, 1.95, pz, mainFloorGroup, "living", false));
-    // White Slipcovered Loveseat + Plaid/Red Pillows + Dark Side Table & Burlap Lamp on West wall X = -20.0 (Photo #5 left!)
-    box(2.6, 1.35, 5.2, MAT.couchWhite, -20.0, 0.92, -7.4, mainFloorGroup, "living");
-    box(0.6, 1.5, 5.2, MAT.couchWhite, -21.0, 1.82, -7.4, mainFloorGroup, "living");
-    box(0.45, 0.85, 0.95, MAT.redDoor, -20.4, 1.95, -9.0, mainFloorGroup, "living", false);
-    box(0.45, 0.85, 0.95, MAT.iron, -20.4, 1.95, -5.8, mainFloorGroup, "living", false);
-    box(1.8, 1.5, 1.8, MAT.darkWood, -20.2, 1.0, -3.6, mainFloorGroup, "living");
-    const livLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.68, 0.85, 14), MAT.warmBulb);
-    livLamp.position.set(-20.2, 2.4, -3.6);
-    mainFloorGroup.add(livLamp);
-    addWarmHalo(-20.2, 2.4, -3.6, 2.6, mainFloorGroup, 0xffbe76, 0.68);
-    // 2 Cream Armchairs side-by-side in foreground facing TV (Photo #5 bottom-right & Photo #6 bottom-right!)
-    [-16.4, -13.2].forEach(ax => {
-      box(2.4, 1.35, 2.4, MAT.couchWhite, ax, 0.92, -1.8, mainFloorGroup, "living");
-      box(2.4, 1.45, 0.55, MAT.couchWhite, ax, 1.75, -0.8, mainFloorGroup, "living");
+
+    // Sculpted Beige 3-Cushion Rolled-Arm Sofa + Plump Buffalo-Check & Cream Throw Pillows on East wall (Photo b101aaca right!)
+    addSculptedSofa(mainFloorGroup, "living", -10.65, 0.24, -9.4, -Math.PI / 2, 5.8, 2.75, 3, MAT.couchBeige, [
+      [-2.15, MAT.couchBeige, 0.22],
+      [-1.35, MAT.buffaloPillow, 0.14],
+      [1.25, MAT.buffaloPillow, -0.15],
+      [2.10, MAT.couchBeige, -0.22]
+    ]);
+    // Sculpted White Slipcovered Loveseat + Buffalo-Check & Red-Striped Pillows on West wall (Photo b101aaca left!)
+    addSculptedSofa(mainFloorGroup, "living", -20.15, 0.24, -7.4, Math.PI / 2, 4.6, 2.65, 2, MAT.couchWhite, [
+      [-1.55, MAT.redStripe, 0.20],
+      [-0.85, MAT.buffaloPillow, 0.12],
+      [1.40, MAT.buffaloPillow, -0.18]
+    ]);
+    // Black slatted end table + hammered mercury-glass base + warm burlap drum shade lamp (Photo b101aaca foreground left!)
+    box(1.75, 0.12, 1.75, MAT.iron, -20.2, 1.68, -3.5, mainFloorGroup, "living");
+    [[-0.75, -0.75], [0.75, -0.75], [-0.75, 0.75], [0.75, 0.75]].forEach(([lx, lz]) => {
+      box(0.12, 1.42, 0.12, MAT.iron, -20.2 + lx, 0.95, -3.5 + lz, mainFloorGroup, "living");
     });
-    box(2.2, 1.15, 3.4, MAT.darkWood, -15.4, 0.82, -6.8, mainFloorGroup, "living");
+    const lampBase = new THREE.Mesh(new THREE.SphereGeometry(0.38, 12, 10), MAT.stainless);
+    lampBase.scale.set(1, 1.25, 1); lampBase.position.set(-20.2, 2.08, -3.5); mainFloorGroup.add(lampBase);
+    const livLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.64, 0.80, 16), MAT.knottyPine);
+    livLamp.position.set(-20.2, 2.75, -3.5);
+    mainFloorGroup.add(livLamp);
+    addWarmHalo(-20.2, 2.75, -3.5, 2.6, mainFloorGroup, 0xffbe76, 0.68);
+    // 2 Sculpted Herringbone-Cream Rolled-Arm Armchairs facing TV + Black Coffee Table w/ Wood Bowl (Photo b101aaca foreground!)
+    [ [-16.3, 0.16], [-13.1, -0.12] ].forEach(([ax, rot]) => {
+      addSculptedSofa(mainFloorGroup, "living", ax, 0.24, -1.85, Math.PI + rot, 2.05, 2.45, 1, MAT.couchWhite, []);
+    });
+    box(2.15, 0.12, 3.45, MAT.iron, -15.4, 1.34, -6.8, mainFloorGroup, "living"); // Matte-black rectangular coffee table!
+    [[-0.95, -1.55], [0.95, -1.55], [-0.95, 1.55], [0.95, 1.55]].forEach(([lx, lz]) => {
+      box(0.12, 1.08, 0.12, MAT.iron, -15.4 + lx, 0.78, -6.8 + lz, mainFloorGroup, "living");
+    });
+    const coffeeBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.20, 0.22, 12), MAT.mahogany);
+    coffeeBowl.position.set(-15.4, 1.48, -6.8); mainFloorGroup.add(coffeeBowl);
 
     // Foosball Game Room (X = -21.75..-11.8, Z = +2.8..+13.75 — Blue Cabinet on Teal East Wall X=-12.7 peeks out right behind open Barn Door just like Photo #6!)
     box(2.8, 0.9, 4.5, new THREE.MeshStandardMaterial({ color: 0x5c1f1a, roughness: 0.5 }), -17.0, 2.35, 8.2, mainFloorGroup, "game");
@@ -2835,40 +3201,53 @@
     addEaveSlope(3.6, 18.8, -9.2, false);  // NE sloped eave in East BR (C4!)
     addEaveSlope(14.8, 13.0, 9.2, true);   // South sloped eave in East BR
     box(41.2, 0.25, 23.6, MAT.ceilingWhite, 0, 8.95, 0, walkUpperEnclosureGroup, null, false);
-    // Exposed Warm Knotty-Pine Vaulted Ridge Beam & Bedroom Ceiling Trim Upstairs (Photos fad90698 & b39ab445!)
-    box(41.0, 0.52, 0.58, MAT.knottyPine, 0, 8.68, 0, walkUpperEnclosureGroup, null, false);
+    // Clean white sculpted dormer vaults upstairs (removed non-existent pine ridge beam to match Photos b39ab445 & fad90698 1:1!)
 
     // --- Upstairs Furniture, Romantic Bedside Lamps & Vanity Sconces ---
     // Walk-In Closet Cherry Drawer Tower (C3)
     box(1.6, 5.8, 4.4, MAT.cherryWood, -9.3, 3.4, -8.5, walkUpperEnclosureGroup, null, false);
     box(1.6, 3.9, 4.4, MAT.cherryWood, -9.3, 2.45, -8.5, upperFloorGroup, "up_closet");
-    // Upstairs West Bedroom: NW Cherry Dresser + TV + Bedside Nightstand & Warm Lamp + Twin Nook Reading Sconce!
-    box(3.2, 2.5, 1.6, MAT.cherryWood, -18.4, 1.75, -10.2, upperFloorGroup, "up_west");
-    box(2.4, 1.5, 0.14, MAT.iron, -18.4, 3.6, -10.2, upperFloorGroup, "up_west");
+    // Upstairs West Bedroom: NW Marble-Top Cherry Dresser + TV + Bedside Nightstand + 2 White Floating Wall Shelves (Photos fad90698 & 7e39af74!)
+    box(3.2, 2.42, 1.6, MAT.cherryWood, -18.4, 1.71, -10.2, upperFloorGroup, "up_west");
+    box(3.32, 0.12, 1.68, MAT.couchWhite, -18.4, 2.96, -10.2, upperFloorGroup, "up_west"); // Cream marble dresser top (fad90698!)
+    [1.05, 1.72, 2.38].forEach(dy => {
+      [-0.75, 0.75].forEach(dx => box(0.10, 0.08, 0.10, MAT.brass, -18.4 + dx, dy, -9.38, upperFloorGroup, null, false));
+    });
+    box(2.4, 1.45, 0.12, MAT.iron, -18.4, 3.78, -10.2, upperFloorGroup, "up_west");
+    // 2 White Floating Wall Shelves + White Frame + Greenery Vase on SW Wall next to Fold-Out Loveseat (Photo 7e39af74 right!)
+    [2.65, 4.05].forEach(sy => box(0.62, 0.10, 2.2, MAT.whiteAppliance, -20.02, sy, 6.2, walkUpperEnclosureGroup, null, false));
+    box(0.12, 1.25, 1.05, MAT.whiteAppliance, -20.12, 4.72, 6.0, walkUpperEnclosureGroup, null, false);
+    const shelfVase = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.36, 10), MAT.whiteAppliance);
+    shelfVase.position.set(-19.95, 4.28, 6.95); walkUpperEnclosureGroup.add(shelfVase);
+    const shelfPlant = new THREE.Mesh(new THREE.DodecahedronGeometry(0.24, 0), MAT.pineNeedlesAlt);
+    shelfPlant.position.set(-19.95, 4.60, 6.95); walkUpperEnclosureGroup.add(shelfPlant);
     box(1.5, 1.65, 1.5, MAT.cherryWood, -9.5, 1.32, -10.3, upperFloorGroup, "up_west");
     const wLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.48, 0.65, 12), MAT.warmBulb);
     wLamp.position.set(-9.5, 2.52, -10.3); upperFloorGroup.add(wLamp);
     addWarmHalo(-9.5, 2.55, -10.3, 2.5, upperFloorGroup, 0xffc680, 0.66);
-    const nookSconce = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), MAT.warmBulb);
-    nookSconce.position.set(-10.8, 5.1, 11.2); walkUpperEnclosureGroup.add(nookSconce);
-    addWarmHalo(-10.8, 5.05, 11.1, 2.2, walkUpperEnclosureGroup, 0xffcc8c, 0.56);
+    const nookSconce = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.34, 10), MAT.warmBulb);
+    nookSconce.position.set(-12.35, 4.55, 10.6); walkUpperEnclosureGroup.add(nookSconce); // Left-wall reading sconce in Twin Nook (7e39af74!)
+    addWarmHalo(-12.15, 4.50, 10.5, 2.2, walkUpperEnclosureGroup, 0xffcc8c, 0.56);
 
-    // Upstairs East 2-Queen Bedroom: Shared Nightstand + Romantic Glowing Lamp, Dresser, White Loveseat + Ottoman + Mirror!
-    box(1.7, 1.8, 1.9, MAT.darkWood, 19.3, 1.4, -1.7, upperFloorGroup, "up_east");
-    const eLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 0.7, 12), MAT.warmBulb);
-    eLamp.position.set(19.3, 2.8, -1.7);
+    // Upstairs East 2-Queen Bedroom: Distressed White & Mahogany 3-Drawer Nightstand + Lamp, Dresser, Sculpted White Loveseat + Ottoman (Photo b39ab445!)
+    box(1.75, 1.85, 2.05, MAT.couchWhite, 19.3, 1.42, -1.7, upperFloorGroup, "up_east");
+    [0.88, 1.42, 1.96].forEach(dy => box(0.10, 0.40, 1.62, MAT.mahogany, 18.39, dy, -1.7, upperFloorGroup, "up_east", false));
+    const eLampBase = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 10), MAT.glass);
+    eLampBase.position.set(19.3, 2.55, -1.7); upperFloorGroup.add(eLampBase);
+    const eLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.50, 0.64, 14), MAT.warmBulb);
+    eLamp.position.set(19.3, 2.98, -1.7);
     upperFloorGroup.add(eLamp);
-    addWarmHalo(19.3, 2.85, -1.7, 3.1, upperFloorGroup, 0xffc278, 0.72);
-    // Dark/White Dresser under North Dormer (C4 left, C6 center!)
+    addWarmHalo(19.3, 2.98, -1.7, 3.1, upperFloorGroup, 0xffc278, 0.72);
+    // Distressed White & Dark-Mahogany 4-Drawer Chest under North Dormer (Photo b39ab445 left!)
     box(3.4, 3.3, 1.6, MAT.couchWhite, 14.5, 2.15, -10.3, upperFloorGroup, "up_east");
-    [1.1, 1.8, 2.5, 3.2].forEach(dy => box(3.0, 0.52, 0.12, MAT.darkWood, 14.5, dy, -9.46, upperFloorGroup, "up_east"));
-    // White Slipcovered Loveseat + Ottoman + Framed Mirror on West wall (C6 left!)
-    box(2.6, 1.5, 5.2, MAT.couchWhite, 7.1, 1.25, -6.5, upperFloorGroup, "up_east");
-    box(0.55, 1.5, 5.2, MAT.couchWhite, 6.1, 2.15, -6.5, upperFloorGroup, "up_east");
-    box(2.6, 1.2, 0.5, MAT.couchWhite, 7.1, 1.8, -9.0, upperFloorGroup, "up_east");
-    box(2.6, 1.2, 0.5, MAT.couchWhite, 7.1, 1.8, -4.0, upperFloorGroup, "up_east");
-    box(2.0, 1.1, 2.2, MAT.couchWhite, 10.2, 1.05, -6.5, upperFloorGroup, "up_east");
-    box(0.45, 0.85, 1.2, MAT.granite, 6.65, 2.15, -6.5, upperFloorGroup, "up_east"); // Throw pillow on white loveseat (C6!)
+    [1.1, 1.8, 2.5, 3.2].forEach(dy => box(3.0, 0.52, 0.12, MAT.mahogany, 14.5, dy, -9.46, upperFloorGroup, "up_east"));
+    // Sculpted White Slipcovered Rolled-Arm Loveseat + Cushioned Ottoman + Knotty-Pine Mirror on West wall!
+    addSculptedSofa(upperFloorGroup, "up_east", 7.15, 0.50, -6.5, Math.PI / 2, 4.4, 2.55, 2, MAT.couchWhite, [
+      [-1.35, MAT.plaid, 0.18],
+      [1.35, MAT.plaid, -0.18]
+    ]);
+    box(2.0, 0.88, 2.2, MAT.couchWhite, 10.25, 0.94, -6.5, upperFloorGroup, "up_east");
+    box(2.08, 0.24, 2.28, MAT.couchWhite, 10.25, 1.46, -6.5, upperFloorGroup, "up_east"); // Piped ottoman top cushion!
     box(0.18, 2.3, 3.3, MAT.knottyPine, 5.72, 4.8, -6.5, walkUpperEnclosureGroup, null, false);
     box(0.14, 1.9, 2.9, MAT.mirror, 5.76, 4.8, -6.5, walkUpperEnclosureGroup, null, false);
 
@@ -3005,7 +3384,28 @@
       up_east:       { x: 8.0,   z: 0.8,  floor: 2, yaw: -1.38, pitch: -0.05 },
       up_bath:       { x: -0.8,  z: -3.6, floor: 2, yaw: -0.25, pitch: -0.06 },
       patio:         { x: -34.5, z: 11.0, floor: 1, yaw: -0.55, pitch: -0.02 },
-      garage:        { x: -41.0, z: 40.0, floor: 1, yaw: 0.12,  pitch: -0.04 }
+      garage:        { x: -41.0, z: 40.0, floor: 1, yaw: 0.12,  pitch: -0.04 },
+      lake_beach:    { x: 16.5,  z: 45.5, floor: 1, yaw: -0.62, pitch: 0.03 }
+    };
+
+    // Calibrated 1:1 Real-Photo Camera Lenses (snaps 3D camera to the exact Vrbo photographer viewpoint!)
+    const PHOTO_POVS = {
+      living:     { pos: [-13.6, 4.9,  1.2],  look: [-15.8, 3.5, -11.5], level: 1 },
+      dining:     { pos: [11.8,  5.1,  1.5],  look: [17.8,  4.2,  8.6],  level: 1 },
+      entry:      { pos: [12.4,  5.1,  9.4],  look: [2.5,   4.5,  5.6],  level: 1 },
+      kitchen:    { pos: [11.8,  5.2,  2.2],  look: [17.8,  4.2, -8.8],  level: 1 },
+      down_bath:  { pos: [4.8,   5.1, -1.8],  look: [7.2,   4.3, -6.8],  level: 1 },
+      down_bed:   { pos: [-7.4,  5.0, -2.8],  look: [-3.8,  3.5, -10.4], level: 1 },
+      game:       { pos: [-19.4, 5.0,  3.8],  look: [-14.8, 3.7,  9.8],  level: 1 },
+      up_west:    { pos: [-8.2,  14.7, 1.5],  look: [-15.4, 12.6,-7.8],  level: 2 },
+      up_closet:  { pos: [-7.2,  14.6,-5.2],  look: [-8.6,  13.2,-9.8],  level: 2 },
+      up_bath:    { pos: [0.6,   14.8,-2.6],  look: [-1.2,  13.4,-8.8],  level: 2 },
+      up_east:    { pos: [7.8,   14.7,-5.2],  look: [16.8,  12.6,-2.0],  level: 2 },
+      up_hall:    { pos: [3.2,   14.7, 1.0],  look: [-4.5,  13.5,-1.2],  level: 2 },
+      porch:      { pos: [11.2,  5.4,  47.5], look: [2.0,   7.2,  13.5], level: 0 },
+      patio:      { pos: [-35.8, 5.4,  8.8],  look: [-25.5, 3.4, -5.5],  level: 0 },
+      garage:     { pos: [-41.0, 5.2,  36.0], look: [-42.5, 3.6,  24.5], level: 0 },
+      lake_beach: { pos: [16.5,  5.2,  45.5], look: [21.8,  4.8,  38.5], level: 0 }
     };
 
     let fpvWalkGoal = null; // Optional tap/click-on-floor target in Walk Mode
@@ -3231,8 +3631,10 @@
           else rId = (z >= 2.8 && x < -11.8) ? "game" : "living";
         } else if (x < -22 && x > -42 && z < 15) {
           rId = "patio";
-        } else if (x <= -42 && z >= 15) {
+        } else if (x <= -32 && z >= 15) {
           rId = "garage";
+        } else if (x >= 14 && z >= 32 && z <= 52) {
+          rId = "lake_beach";
         } else {
           rId = "porch";
         }
@@ -3676,7 +4078,13 @@
       const el = document.createElement("div");
       el.className = "pin-label";
       el.innerHTML = `<span class="pin-title">${b.short}</span><span class="pin-tag"></span>`;
-      el.addEventListener("click", () => selectRoom(b.room, true, true));
+      el.addEventListener("click", () => {
+        if (b.id === "fold_up" && appMode === "explore") {
+          setFoldOutOpen(!foldOutOpen);
+        } else {
+          selectRoom(b.room, true, true);
+        }
+      });
       labelsLayer.appendChild(el);
       bedPinNodes.push({ el, bed: b });
     });
@@ -3924,7 +4332,10 @@
               <div class="bed-name">${b.name}</div>
               <div class="bed-room">${b.roomName}</div>
             </div>
-            <button type="button" class="bed-walk-chip" data-walk-bed="${b.room}">Walk 3D →</button>
+            <div style="display:flex;gap:4px;align-items:center">
+              ${b.id === "fold_up" ? `<button type="button" class="bed-walk-chip" data-toggle-fold="1">${foldOutOpen ? "↕ Fold Up" : "↕ Unfold"}</button>` : ""}
+              <button type="button" class="bed-walk-chip" data-walk-bed="${b.room}">Walk 3D →</button>
+            </div>
           </div>
           <div class="quick-chips">${chipsHtml}</div>
           <div class="bed-controls">
@@ -3950,6 +4361,12 @@
           e.stopPropagation();
           setAppMode("explore");
           spawnFPV(roomToSpawnKey(wBtn.dataset.walkBed));
+        });
+      });
+      bedListEl.querySelectorAll("[data-toggle-fold]").forEach(fBtn => {
+        fBtn.addEventListener("click", e => {
+          e.stopPropagation();
+          setFoldOutOpen(!foldOutOpen);
         });
       });
 
@@ -4008,7 +4425,8 @@
         const tag = el.querySelector(".pin-tag");
         el.classList.remove("fam1", "fam2", "kids");
         if (st.group !== "open") el.classList.add(st.group);
-        tag.textContent = st.note || (st.group === "fam1" ? "Elad's Family" : st.group === "fam2" ? "Eitan's Family" : st.group === "kids" ? "Kids" : "Free");
+        const baseTxt = st.note || (st.group === "fam1" ? "Elad's Family" : st.group === "fam2" ? "Eitan's Family" : st.group === "kids" ? "Kids" : "Free");
+        tag.textContent = bed.id === "fold_up" ? `${baseTxt} ${foldOutOpen ? "✓ Open" : "↕ Tap"}` : baseTxt;
       });
     }
 
@@ -4076,11 +4494,149 @@
       } catch (_) {}
     }
 
+    // --- THANKSGIVING FEAST TABLE SPREAD + TODDLER BOOSTER SPOTS & 3D SAFETY STAIR GATES ---
+    let feastMode = false;
+    let safetyGatesOn = false;
+    let lastWalkMoveTs = 0;
+
+    const thanksgivingFeastGroup = new THREE.Group();
+    thanksgivingFeastGroup.visible = false;
+    // Golden Roast Turkey on Silver Platter + Drumsticks!
+    const feastPlatter = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.66, 0.06, 18), MAT.stainless);
+    feastPlatter.scale.set(1.0, 1, 1.32); feastPlatter.position.set(15.2, 3.10, 5.8); thanksgivingFeastGroup.add(feastPlatter);
+    const turkeyMat = new THREE.MeshStandardMaterial({ color: 0xc86b1e, roughness: 0.36 });
+    const feastTurkey = new THREE.Mesh(new THREE.SphereGeometry(0.48, 14, 12), turkeyMat);
+    feastTurkey.scale.set(1.05, 0.82, 1.35); feastTurkey.position.set(15.2, 3.42, 5.8); thanksgivingFeastGroup.add(feastTurkey);
+    // Pumpkin Pie + Whipped Cream & Pecan Pie + Cranberry Dish!
+    const pieMat = new THREE.MeshStandardMaterial({ color: 0xd97324, roughness: 0.65 });
+    const pecanMat = new THREE.MeshStandardMaterial({ color: 0x6b3216, roughness: 0.55 });
+    [ [4.05, pieMat, true], [7.55, pecanMat, false] ].forEach(([pz, pMat, whip]) => {
+      const crust = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.36, 0.10, 16), MAT.knottyPine);
+      crust.position.set(15.2, 3.12, pz); thanksgivingFeastGroup.add(crust);
+      const fill = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.34, 0.11, 16), pMat);
+      fill.position.set(15.2, 3.13, pz); thanksgivingFeastGroup.add(fill);
+      if (whip) {
+        const dollop = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), MAT.whiteAppliance);
+        dollop.position.set(15.2, 3.21, pz); thanksgivingFeastGroup.add(dollop);
+      }
+    });
+    const cranBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.20, 0.16, 14), MAT.redDoor);
+    cranBowl.position.set(15.2, 3.15, 2.95); thanksgivingFeastGroup.add(cranBowl);
+    // 2 Brass Taper Candlesticks + Warm Flickering Candle Flames!
+    [4.85, 6.75].forEach(cz => {
+      const holder = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.16, 0.22, 10), MAT.brass);
+      holder.position.set(15.2, 3.18, cz); thanksgivingFeastGroup.add(holder);
+      const taper = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 0.48, 8), MAT.couchWhite);
+      taper.position.set(15.2, 3.48, cz); thanksgivingFeastGroup.add(taper);
+      const cFlame = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 8), MAT.warmBulb);
+      cFlame.position.set(15.2, 3.78, cz); thanksgivingFeastGroup.add(cFlame);
+    });
+    const feastCandleLight = new THREE.PointLight(0xffb454, 0.72, 13);
+    feastCandleLight.position.set(15.2, 4.1, 5.8);
+    thanksgivingFeastGroup.add(feastCandleLight);
+    // Kid Booster Cushions & Sippy Cups for Ada (2), Maya (3) & Galileo (4)!
+    box(1.08, 0.28, 1.08, MAT.redDoor, 12.85, 2.24, 5.8, thanksgivingFeastGroup, "dining");   // Ada (2) booster seat!
+    box(1.08, 0.28, 1.08, MAT.patioBlue, 17.55, 2.24, 5.8, thanksgivingFeastGroup, "dining"); // Maya (3) booster seat!
+    [ [13.85, 5.8, MAT.redDoor], [16.55, 5.8, MAT.patioBlue], [13.85, 3.4, MAT.turquoiseCab] ].forEach(([sx, sz, sMat]) => {
+      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.28, 10), sMat);
+      cup.position.set(sx, 3.21, sz); thanksgivingFeastGroup.add(cup);
+    });
+    mainFloorGroup.add(thanksgivingFeastGroup);
+
+    // 3D Toddler Stair-Gates & Step-Down Safety Markers!
+    const safetyGatesGroup = new THREE.Group();
+    safetyGatesGroup.visible = false;
+    scene.add(safetyGatesGroup);
+    function add3DBabyGate(w, x, y, z, rotY = 0) {
+      const gg = new THREE.Group();
+      gg.position.set(x, y, z);
+      gg.rotation.y = rotY;
+      box(w, 0.12, 0.12, MAT.knottyPine, 0, 2.45, 0, gg, null, false);
+      box(w, 0.12, 0.12, MAT.knottyPine, 0, 0.18, 0, gg, null, false);
+      [-w / 2 + 0.06, w / 2 - 0.06].forEach(px => box(0.12, 2.4, 0.12, MAT.knottyPine, px, 1.32, 0, gg, null, false));
+      for (let bx = -w / 2 + 0.34; bx < w / 2 - 0.2; bx += 0.32) {
+        box(0.05, 2.18, 0.05, MAT.whiteAppliance, bx, 1.32, 0, gg, null, false);
+      }
+      box(0.24, 0.18, 0.16, MAT.redDoor, w / 2 - 0.28, 2.46, 0, gg, null, false); // Childproof safety latch!
+      return gg;
+    }
+    const topStairGate = add3DBabyGate(3.05, 2.56, 0.50, 3.62, 0);
+    topStairGate.visible = false;
+    upperFloorGroup.add(topStairGate); // Moves cleanly with upperFloorGroup in exploded All-Floors view!
+    safetyGatesGroup.add(add3DBabyGate(3.15, 4.72, 0.62, 11.45, Math.PI / 2)); // Bottom of starter log steps
+    safetyGatesGroup.add(add3DBabyGate(3.25, -9.28, 0.58, -0.10, Math.PI / 2)); // Sunken Living Room 2-step drop-off
+
+    function setFoldOutOpen(open) {
+      foldOutOpen = open;
+      if (foldOutExtGroup) foldOutExtGroup.visible = open;
+      const kBtn = document.getElementById("btn-kids-foldout");
+      if (kBtn) {
+        kBtn.classList.toggle("active", open);
+        kBtn.textContent = open ? "↕ Fold Up Ada's Bed" : "↕ Unfold Ada's Twin Bed";
+      }
+      renderBedPlanner();
+      updateBedColorsAndUI();
+      showToast(open ? "Unfolded Ada's Twin Sleeper — plenty of carpet clearance to walk past!" : "Folded Twin Sleeper back into cozy loveseat");
+    }
+
+    function setFeastMode(on) {
+      feastMode = on;
+      thanksgivingFeastGroup.visible = on;
+      grassPot.visible = grassBlades.visible = !on;
+      ["btn-feast-plan", "btn-feast-walk", "btn-kids-feast"].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.classList.toggle("active", on);
+      });
+      if (on) {
+        playChime([523.25, 659.25, 783.99]);
+        showToast("🦃 Thanksgiving Feast set! Roast turkey, pies, candles & boosters for Ada (2) & Maya (3)!");
+      } else {
+        showToast("Cleared Thanksgiving table back to everyday cabin setting");
+      }
+    }
+
+    function setSafetyGates(on) {
+      safetyGatesOn = on;
+      safetyGatesGroup.visible = on;
+      topStairGate.visible = on;
+      ["btn-gates-plan", "btn-gates-walk", "btn-kids-gates"].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.classList.toggle("active", on);
+      });
+      showToast(on ? "🛡️ 3D Toddler Safety Gates shown at top/bottom of stairs & sunken steps!" : "Hid 3D toddler safety gates");
+    }
+
+    function matchPhotoPOV(roomId) {
+      const targetId = ROOMS[roomId] ? roomId : (fpv.currentRoom || "living");
+      const pov = PHOTO_POVS[targetId] || PHOTO_POVS.living;
+      if (autoTour.active) stopAutoTour();
+      if (appMode !== "explore") setAppMode("explore");
+      pipHiddenByUser = false;
+      fpvWalkGoal = null;
+      const [px, py, pz] = pov.pos;
+      const [lx, ly, lz] = pov.look;
+      fpv.floor = pov.level === 2 ? 2 : 1;
+      fpv.x = px; fpv.z = pz;
+      fpv.y = fpv.goalY = py - fpv.eyeHeight;
+      fpv.yaw = Math.atan2(-(lx - px), -(lz - pz));
+      fpv.pitch = Math.atan2(ly - py, Math.hypot(lx - px, lz - pz));
+      fpv.currentRoom = targetId;
+      document.getElementById("fpv-loc-text").textContent = ROOMS[targetId].name;
+      syncWalkOverlays();
+      if (window.innerWidth <= 820) setSheetCollapsed(true);
+      showToast(`📷 Matched exact real-photo angle for ${ROOMS[targetId].name}!`);
+    }
+
     function triggerPropAction(action) {
       if (action === "barn_door") {
         setBarnDoor(!barnDoorOpen);
         updateSoundLabels();
         showToast(barnDoorOpen ? "Slid Game Room barn door open" : "Closed Game Room barn door (blocks foosball noise!)");
+      } else if (action === "toggle_foldout") {
+        setFoldOutOpen(!foldOutOpen);
+      } else if (action === "lake_beach") {
+        openLightbox("lake_beach", 0);
+        showToast("5-min flat walk down Aidway Ln to Lake Cle Elum / Speelyi Beach!");
       } else if (action === "camp_fire") {
         campFireOn = !campFireOn;
         flameOuter.visible = flameCore.visible = campFireOn;
@@ -4690,6 +5246,18 @@
       pipHiddenByUser = true;
       pipCard.classList.add("hidden");
     });
+    document.getElementById("btn-pip-pov").addEventListener("click", e => {
+      e.stopPropagation();
+      matchPhotoPOV(fpv.currentRoom || "porch");
+    });
+    document.getElementById("btn-insp-pov").addEventListener("click", () => matchPhotoPOV(activeInspectorRoomId));
+    ["btn-feast-plan", "btn-feast-walk", "btn-kids-feast"].forEach(id => {
+      document.getElementById(id).addEventListener("click", () => setFeastMode(!feastMode));
+    });
+    ["btn-gates-plan", "btn-gates-walk", "btn-kids-gates"].forEach(id => {
+      document.getElementById(id).addEventListener("click", () => setSafetyGates(!safetyGatesOn));
+    });
+    document.getElementById("btn-kids-foldout").addEventListener("click", () => setFoldOutOpen(!foldOutOpen));
     pipCard.addEventListener("click", () => openLightbox(fpv.currentRoom || "porch", 0));
 
     function syncWalkOverlays() {
@@ -4975,7 +5543,14 @@
           }
         }
       } else if (appMode === "explore") {
+        const prevFx = fpv.x, prevFz = fpv.z, prevYaw = fpv.yaw, prevPitch = fpv.pitch;
         updateFPVPhysics(dt);
+        if (Math.hypot(fpv.x - prevFx, fpv.z - prevFz) > 0.004 || Math.abs(fpv.yaw - prevYaw) > 0.003 || Math.abs(fpv.pitch - prevPitch) > 0.003 || camCtrl.dragging) {
+          lastWalkMoveTs = now;
+        }
+        const shouldTuckMob = window.innerWidth <= 820 && (now - lastWalkMoveTs) < 550;
+        minimapWrap.classList.toggle("hud-tucked", shouldTuckMob);
+        pipCard.classList.toggle("hud-tucked", shouldTuckMob);
         // Keep full 1st-floor interior walls, ceilings, cabinets & lighting 100% visible even when outside looking in!
         // Only swap upper exterior roof vs upper vertical dormer walls once halfway up the stairs (fpv.y > 4.5)!
         const onUpper = fpv.y > 4.5;
