@@ -553,7 +553,7 @@
       </div>
 
       <div class="top-quick-actions">
-        <button class="btn" id="btn-tv-dock" title="Watch Mita Gami @ Live from Home on the Living Room TV!">📺 TV</button>
+        <button class="btn" id="btn-tv-dock" title="Watch Be Svendsen live at Mount Nemrut (Cercle) on the Living Room TV!">📺 TV</button>
         <button class="btn" id="btn-tour" title="30-second hands-free guided 3D cabin tour">▶ Tour</button>
         <button class="btn active" id="btn-night" title="Toggle sunny golden hour vs. romantic starry night">☀️ Day</button>
         <button class="btn btn-outline-accent" id="btn-top-share" title="Copy sleeping plan &amp; shareable link">Share</button>
@@ -621,7 +621,7 @@
         <!-- OPTIONAL POP-OUT / SOUND TV PLAYER DOCK -->
         <div class="tv-pip-dock hidden" id="tv-pip-dock">
           <div class="pip-head">
-            <span id="tv-dock-title">📺 Mita Gami</span>
+            <span id="tv-dock-title">📺 Be Svendsen</span>
             <div style="display:flex;gap:4px;align-items:center">
               <button type="button" class="pip-close" id="btn-tv-mute-tog" title="Mute / Unmute TV" style="font-size:11px">🔊 15%</button>
               <input id="tv-vol-range" type="range" min="0" max="100" value="15" style="width:52px;accent-color:var(--cp-accent);cursor:pointer" title="TV Volume (15%)" />
@@ -1450,7 +1450,7 @@
       }, 1, 1)
     };
 
-    // Live Animated Canvas Texture for Living Room TV ("Mita Gami @ Live from Home 2021" warm desert-sunset DJ set!)
+    // Live Animated Canvas Texture for Living Room TV ("Be Svendsen live at Mount Nemrut, in Türkiye for Cercle" sunset mountain DJ set!)
     const tvCanvas = document.createElement("canvas");
     tvCanvas.width = 320; tvCanvas.height = 180;
     const tvCtx = tvCanvas.getContext("2d");
@@ -1458,36 +1458,39 @@
     function drawTvFrame(timeSec) {
       const w = 320, h = 180;
       const sky = tvCtx.createLinearGradient(0, 0, 0, h);
-      sky.addColorStop(0, "#2c1c38");
-      sky.addColorStop(0.48, "#9e4738");
-      sky.addColorStop(0.82, "#e89249");
-      sky.addColorStop(1, "#382218");
+      sky.addColorStop(0, "#1f2a44");
+      sky.addColorStop(0.45, "#a8523b");
+      sky.addColorStop(0.80, "#f09d4c");
+      sky.addColorStop(1, "#352118");
       tvCtx.fillStyle = sky; tvCtx.fillRect(0, 0, w, h);
-      // Warm sun orb & gentle soundwave horizon
       const sunY = 78 + Math.sin(timeSec * 0.8) * 5;
       const sg = tvCtx.createRadialGradient(160, sunY, 4, 160, sunY, 56);
       sg.addColorStop(0, "rgba(255,238,190,0.95)");
       sg.addColorStop(0.5, "rgba(255,162,84,0.45)");
       sg.addColorStop(1, "rgba(255,120,50,0)");
       tvCtx.fillStyle = sg; tvCtx.beginPath(); tvCtx.arc(160, sunY, 56, 0, Math.PI * 2); tvCtx.fill();
-      // Warm desert hills + DJ booth silhouette + subtle equalizer bars
-      tvCtx.fillStyle = "#261612";
-      tvCtx.beginPath(); tvCtx.moveTo(0, 132); tvCtx.quadraticCurveTo(90, 112, 175, 128); tvCtx.quadraticCurveTo(255, 140, 320, 120); tvCtx.lineTo(320, h); tvCtx.lineTo(0, h); tvCtx.fill();
+      // Mount Nemrut golden ridge + ancient stone head silhouettes + Be Svendsen DJ booth + equalizer bars
+      tvCtx.fillStyle = "#2b1913";
+      tvCtx.beginPath(); tvCtx.moveTo(0, 134); tvCtx.lineTo(78, 96); tvCtx.lineTo(165, 126); tvCtx.lineTo(248, 92); tvCtx.lineTo(320, 122); tvCtx.lineTo(320, h); tvCtx.lineTo(0, h); tvCtx.fill();
+      tvCtx.fillStyle = "#4a3328";
+      [[58, 108], [262, 104]].forEach(([sx, sy]) => {
+        tvCtx.beginPath(); tvCtx.moveTo(sx - 10, sy + 18); tvCtx.lineTo(sx - 6, sy - 6); tvCtx.lineTo(sx + 6, sy - 6); tvCtx.lineTo(sx + 10, sy + 18); tvCtx.fill();
+      });
       tvCtx.fillStyle = "#140c0a";
-      tvCtx.fillRect(132, 124, 56, 26); // DJ deck table
+      tvCtx.fillRect(132, 124, 56, 26);
       tvCtx.beginPath(); tvCtx.arc(160, 108, 9, 0, Math.PI * 2); tvCtx.fill();
       tvCtx.fillRect(149, 117, 22, 14);
       for (let bi = 0; bi < 24; bi++) {
         const bh = 6 + Math.abs(Math.sin(timeSec * 3.6 + bi * 0.55)) * 18;
-        tvCtx.fillStyle = "rgba(255,214,153,0.58)";
+        tvCtx.fillStyle = "rgba(255,214,153,0.62)";
         tvCtx.fillRect(44 + bi * 10, 164 - bh, 6, bh);
       }
-      tvCtx.fillStyle = "rgba(255,248,235,0.92)";
-      tvCtx.font = "bold 12px Segoe UI, sans-serif";
-      tvCtx.fillText("▶ Mita Gami @ Live from Home", 14, 22);
+      tvCtx.fillStyle = "rgba(255,248,235,0.94)";
+      tvCtx.font = "bold 11.5px Segoe UI, sans-serif";
+      tvCtx.fillText("▶ Be Svendsen • Cercle @ Mt. Nemrut", 12, 22);
       tvCtx.font = "10px Segoe UI, sans-serif";
-      tvCtx.fillStyle = "rgba(255,225,190,0.82)";
-      tvCtx.fillText("Tap TV for Live YouTube Audio & Video", 14, 37);
+      tvCtx.fillStyle = "rgba(255,225,190,0.84)";
+      tvCtx.fillText("2.1 Towers + Sub • Tap for Live Audio", 12, 37);
       tvLiveTex.needsUpdate = true;
     }
     drawTvFrame(0);
@@ -1568,7 +1571,7 @@
     });
     scene.add(interiorLights);
 
-    // Living Room TV Screen Warm Sunset Spill Light ("Mita Gami @ Live from Home" glow on rug & console!)
+    // Living Room TV Screen Warm Sunset Spill Light ("Be Svendsen @ Mount Nemrut" glow on rug & console!)
     const tvGlowLight = new THREE.PointLight(0xf29a58, 0.52, 14);
     tvGlowLight.position.set(-15.6, 3.6, -11.4);
     scene.add(tvGlowLight);
@@ -2649,14 +2652,17 @@
     box(0.32, 0.75, 0.75, MAT.stainless, 24.22, 4.2, 5.8, mainFloorGroup, null, false); // Stainless direct-vent fireplace cap (#2!)
     [[-22.12, -14.12], [22.12, -14.12], [-22.12, 14.12], [22.12, 14.12]].forEach(([cx, cz]) => addLogCorners(cx, cz, WALL_H, 0.6, mainFloorGroup));
 
-    // Full-Height 6.8ft Craftsman Double Front Doors w/ Stained-Glass Transoms + Slate Entry Mat (Photo fe50fe0a!)
+    // Full-Height 6.8ft Craftsman Double Front Doors w/ Stained-Glass Transoms + Slate Entry Mat (Visible in BOTH Plan & Walk Modes!)
+    const planCutawayGlass = [];
     box(4.8, 0.04, 2.2, MAT.couchBeige, 7.0, 0.64, 12.1, mainFloorGroup, "entry", false); // Woven cream indoor entry mat on slate pad!
     [ [4.84, 1.54, 0.98], [9.16, -1.54, -0.98] ].forEach(([dx, rot, leafOff]) => {
       const dg = new THREE.Group();
       dg.position.set(dx, 2.75, 13.42);
       dg.rotation.y = rot;
       box(1.96, 4.3, 0.18, MAT.darkDoor, leafOff, 0, 0, dg, null, false);
-      [-0.52, 0, 0.52].forEach(px => box(0.36, 2.6, 0.21, MAT.mahogany, leafOff + px, -0.25, 0, dg, null, false)); // 3 vertical Craftsman panels!
+      [-0.52, 0, 0.52].forEach(px => box(0.36, 2.2, 0.21, MAT.mahogany, leafOff + px, -0.55, 0, dg, null, false)); // 3 vertical Craftsman panels!
+      const cutGlass = box(1.42, 0.92, 0.23, MAT.stainedGlass, leafOff, 1.32, 0, dg, null, false); // Cutaway stained-glass lite for Plan Mode!
+      planCutawayGlass.push(cutGlass);
       box(0.10, 0.42, 0.28, MAT.brass, leafOff * 1.72, 0.55, 0, dg, null, false);
       mainFloorGroup.add(dg);
       const dgTop = new THREE.Group();
@@ -2706,9 +2712,9 @@
       sp.position.set(sx, 2.0, 1.48);
       mainFloorGroup.add(sp);
     });
-    // 8. Foosball Game Room East Teal Wood Wall + Rustic US Flag AT X = -11.8 (FULL_H1_SUNK seals tight to ceiling!)
+    // 8. Foosball Game Room East Teal Wood Wall + Rustic US Flag AT X = -11.8 (Mounted on mainFloorGroup so it shows in Plan Mode & Walk Mode!)
     buildWallAxis("z", -11.8, 2.8, 13.75, [], { level: 1, cutH: WALL_H, fullH: FULL_H1_SUNK, yBase: 0.24, thick: 0.35, mat: MAT.drywall, innerMat: MAT.shiplapTeal, innerSign: -1, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup });
-    box(0.10, 2.2, 4.0, MAT.usFlag, -12.04, 5.4, 8.2, walkMainEnclosureGroup, null, false);
+    box(0.10, 1.90, 3.6, MAT.usFlag, -12.04, 3.75, 8.2, mainFloorGroup, "game", false);
     // 9. Living Room South Wall (Z = +2.8, X = -21.75..-9.2 — FULL_H1_SUNK seals tight to ceiling!):
     buildWallAxis("x", 2.8, -21.75, -9.2, [[-21.55, -17.7], [-11.35, -9.55]], { level: 1, cutH: WALL_H, fullH: FULL_H1_SUNK, yBase: 0.24, thick: 0.35, mat: MAT.shiplapH, cutParent: mainFloorGroup, walkParent: walkMainEnclosureGroup, frameDoors: true });
     addCollider(1, -11.4, 2.8, -9.5, 2.8); // Closed closet door stays solid in Walk Inside mode!
@@ -2865,15 +2871,15 @@
     makePlushPillow(0.42, 0.72, 1.35, MAT.redStripe, 1.88, 2.02, 4.10, 0, 0.12, mainFloorGroup, "entry");
     makePlushPillow(0.42, 0.72, 1.35, MAT.redStripe, 1.88, 2.02, 5.50, 0, 0.12, mainFloorGroup, "entry");
     box(0.85, 0.85, 0.95, MAT.knottyPine, 2.15, 1.02, 8.15, mainFloorGroup, "entry"); // Wood step-cube beside woven basket (f127dde2!)
-    // Weathered "Farmers MARKET" sign + Cow canvas + Hanging geometric wire pendant under stairs!
-    box(0.10, 0.78, 2.75, MAT.farmersSign, 1.24, 4.35, 4.8, walkMainEnclosureGroup, null, false);
-    box(0.10, 1.05, 1.05, MAT.cowCanvas, 1.24, 5.45, 2.65, walkMainEnclosureGroup, null, false);
-    box(0.04, 1.05, 0.04, MAT.iron, 2.65, 5.65, 4.8, walkMainEnclosureGroup, null, false);
+    // Weathered "Farmers MARKET" sign + Cow canvas + Hanging geometric wire pendant under stairs (in mainFloorGroup so visible in Plan Mode & Walk Mode!)
+    box(0.10, 0.78, 2.75, MAT.farmersSign, 1.24, 4.08, 4.8, mainFloorGroup, "entry", false);
+    box(0.10, 0.98, 0.98, MAT.cowCanvas, 1.24, 4.32, 2.72, mainFloorGroup, "entry", false);
+    box(0.04, 0.72, 0.04, MAT.iron, 2.65, 5.28, 4.8, mainFloorGroup, null, false);
     const underStairCage = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.52, 6, 1, true), new THREE.MeshStandardMaterial({ color: 0x2b2623, wireframe: true }));
-    underStairCage.position.set(2.65, 4.95, 4.8); walkMainEnclosureGroup.add(underStairCage);
+    underStairCage.position.set(2.65, 4.78, 4.8); mainFloorGroup.add(underStairCage);
     const underStairBulb = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), MAT.warmBulb);
-    underStairBulb.position.set(2.65, 4.92, 4.8); walkMainEnclosureGroup.add(underStairBulb);
-    addWarmHalo(2.65, 4.90, 4.8, 1.8, walkMainEnclosureGroup, 0xffcc88, 0.54);
+    underStairBulb.position.set(2.65, 4.75, 4.8); mainFloorGroup.add(underStairBulb);
+    addWarmHalo(2.65, 4.74, 4.8, 1.8, mainFloorGroup, 0xffcc88, 0.54);
     const bistroTop = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.14, 18), MAT.logBeam);
     bistroTop.position.set(3.75, 2.45, 4.8);
     mainFloorGroup.add(bistroTop);
@@ -2947,32 +2953,35 @@
     box(0.32, 0.28, 1.5, MAT.pineTrunk, 19.55, 0.92, 5.8, mainFloorGroup, "dining", false);
     addWarmHalo(19.25, 1.45, 5.8, 3.0, mainFloorGroup, 0xff8a36, 0.65);
     box(2.15, 0.34, 5.05, MAT.logBeam, 20.4, 4.35, 5.8, mainFloorGroup, "dining");
-    // Potted green boxwood topiary on left of mantel + Stag-in-Top-Hat portrait resting cleanly above mantel!
+    // Potted green boxwood topiary on left of mantel + Stag-in-Top-Hat portrait on architectural chimney breast (visible in Plan Mode & Walk Mode!)
     box(0.32, 0.36, 0.32, MAT.whiteAppliance, 20.1, 4.68, 4.05, mainFloorGroup, "dining", false);
     const mantelPlant = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.78, 9), MAT.pineNeedlesAlt);
     mantelPlant.position.set(20.1, 5.18, 4.05); mainFloorGroup.add(mantelPlant);
-    box(0.14, 2.58, 2.26, MAT.couchBeige, 21.32, 5.82, 5.8, walkMainEnclosureGroup, null, false);
+    box(0.26, 2.75, 4.65, MAT.drywall, 21.48, 5.85, 5.8, mainFloorGroup, "dining", false); // Finished chimney breast backing for Plan Mode!
+    box(0.14, 2.58, 2.26, MAT.couchBeige, 21.32, 5.82, 5.8, mainFloorGroup, "dining", false);
     const stagPlane = new THREE.Mesh(new THREE.PlaneGeometry(2.14, 2.46), MAT.stagArt);
     stagPlane.rotation.y = -Math.PI / 2;
     stagPlane.position.set(21.23, 5.82, 5.8);
-    walkMainEnclosureGroup.add(stagPlane);
-    // Glowing White Decorative Fairy-Light Tree in SE Dining Corner (X = 19.8, Z = 12.0 — Photo fe50fe0a & f127dde2!)
+    stagPlane.userData.roomId = "dining";
+    pickables.push(stagPlane);
+    mainFloorGroup.add(stagPlane);
+    // Glowing White Decorative Fairy-Light Tree in SE Dining Corner (in mainFloorGroup so visible in Plan Mode & Walk Mode!)
     const fairyTreeGrp = new THREE.Group();
     fairyTreeGrp.position.set(19.8, 0.60, 12.0);
-    const ftTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.14, 4.8, 8), MAT.whiteAppliance);
-    ftTrunk.position.y = 2.4; fairyTreeGrp.add(ftTrunk);
+    const ftTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.14, 4.3, 8), MAT.whiteAppliance);
+    ftTrunk.position.y = 2.15; fairyTreeGrp.add(ftTrunk);
     for (let fb = 0; fb < 8; fb++) {
       const ang = (fb / 8) * Math.PI * 2;
-      const br = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.04, 2.1, 6), MAT.whiteAppliance);
-      br.position.set(Math.cos(ang) * 0.42, 3.8 + (fb % 3) * 0.45, Math.sin(ang) * 0.42);
+      const br = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.04, 1.95, 6), MAT.whiteAppliance);
+      br.position.set(Math.cos(ang) * 0.42, 3.45 + (fb % 3) * 0.38, Math.sin(ang) * 0.42);
       br.rotation.set(Math.sin(ang) * 0.52, 0, -Math.cos(ang) * 0.52);
       fairyTreeGrp.add(br);
       const tw = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), MAT.warmBulb);
-      tw.position.set(Math.cos(ang) * 0.78, 4.5 + (fb % 3) * 0.42, Math.sin(ang) * 0.78);
+      tw.position.set(Math.cos(ang) * 0.78, 4.10 + (fb % 3) * 0.35, Math.sin(ang) * 0.78);
       fairyTreeGrp.add(tw);
     }
-    walkMainEnclosureGroup.add(fairyTreeGrp);
-    addWarmHalo(19.8, 4.6, 12.0, 2.2, walkMainEnclosureGroup, 0xffe4b0, 0.52);
+    mainFloorGroup.add(fairyTreeGrp);
+    addWarmHalo(19.8, 4.25, 12.0, 2.2, mainFloorGroup, 0xffe4b0, 0.52);
 
     // Kitchen Shaker Cabinets, Speckled Granite Peninsula, Gooseneck Faucet, Coffee Maker, SS Range + Microwave + Fridge
     box(8.4, 2.9, 2.6, MAT.shakerCab, 16.9, 2.05, -1.2, mainFloorGroup, "kitchen");
@@ -3064,6 +3073,67 @@
     const livTvScreenMesh = box(3.52, 1.98, 0.18, new THREE.MeshBasicMaterial({ map: tvLiveTex }), -15.6, 3.55, -12.74, mainFloorGroup, "living", false);
     livTvScreenMesh.userData.propAction = "liv_tv";
     pickables.push(livTvScreenMesh);
+
+    // --- Audiophile 2.1 Living Room Hi-Fi Sound System: 2 Floorstanding Tower Speakers + Corner Deep-Bass Subwoofer! ---
+    const towerDriverCones = [];
+    const copperConeMat = new THREE.MeshStandardMaterial({ color: 0xb8763e, roughness: 0.32, metalness: 0.65 });
+    const surroundMat = new THREE.MeshStandardMaterial({ color: 0x151618, roughness: 0.75 });
+    [ [-18.52, 0.16], [-12.68, -0.16] ].forEach(([sx, sRot]) => {
+      const spk = new THREE.Group();
+      spk.position.set(sx, 0.24, -12.52);
+      spk.rotation.y = sRot; // Toed-in 9 deg toward Living Room seating sweet spot!
+      // Matte-black acoustic isolation plinth + 4 brass spike feet
+      box(0.96, 0.10, 1.06, MAT.iron, 0, 0.10, 0, spk, "living");
+      [[-0.40, -0.44], [0.40, -0.44], [-0.40, 0.44], [0.40, 0.44]].forEach(([fx, fz]) => {
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.08, 8), MAT.brass);
+        spike.rotation.x = Math.PI; spike.position.set(fx, 0.04, fz); spk.add(spike);
+      });
+      // Satin-mahogany acoustic tower enclosure + matte-ebony front baffle
+      box(0.84, 3.32, 0.94, MAT.mahogany, 0, 1.81, 0, spk, "living");
+      box(0.74, 3.16, 0.08, MAT.iron, 0, 1.81, 0.45, spk, "living", false);
+      // Silk-dome waveguide tweeter at ear level (y = 2.95)
+      const twRing = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.06, 16), MAT.brass);
+      twRing.rotation.x = Math.PI / 2; twRing.position.set(0, 2.95, 0.49); spk.add(twRing);
+      const twDome = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 8), MAT.iron);
+      twDome.position.set(0, 2.95, 0.51); spk.add(twDome);
+      // Dual 6.5" woven-copper mid-bass drivers (y = 2.32 & y = 1.62)
+      [2.32, 1.62].forEach(dy => {
+        const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.06, 18), surroundMat);
+        ring.rotation.x = Math.PI / 2; ring.position.set(0, dy, 0.49); spk.add(ring);
+        const cone = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.09, 0.07, 18), copperConeMat);
+        cone.rotation.x = Math.PI / 2; cone.position.set(0, dy, 0.50); spk.add(cone);
+        towerDriverCones.push(cone);
+        const plug = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 8), MAT.iron);
+        plug.position.set(0, dy, 0.53); spk.add(plug);
+      });
+      // Lower front bass-reflex port + warm amber status LED
+      const port = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.08, 14), surroundMat);
+      port.rotation.x = Math.PI / 2; port.position.set(0, 0.85, 0.48); spk.add(port);
+      box(0.05, 0.05, 0.04, MAT.warmBulb, 0, 0.42, 0.50, spk, null, false);
+      spk.traverse(ch => { if (ch.isMesh) { ch.userData.propAction = "liv_sound"; if (!pickables.includes(ch)) pickables.push(ch); } });
+      mainFloorGroup.add(spk);
+    });
+
+    // Dedicated Corner-Loaded 12" Powered Bass Subwoofer ("Sub for Bass" at NW acoustic corner X = -19.88, Z = -12.35!)
+    const subGrp = new THREE.Group();
+    subGrp.position.set(-19.88, 0.24, -12.35);
+    subGrp.rotation.y = 0.24;
+    [[-0.56, -0.56], [0.56, -0.56], [-0.56, 0.56], [0.56, 0.56]].forEach(([fx, fz]) => {
+      box(0.14, 0.10, 0.14, MAT.brass, fx, 0.05, fz, subGrp, null, false);
+    });
+    box(1.42, 1.34, 1.44, MAT.iron, 0, 0.77, 0, subGrp, "living");
+    box(1.48, 0.10, 1.50, MAT.mahogany, 0, 1.48, 0, subGrp, "living"); // Beveled walnut/mahogany top plate!
+    const subSurround = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.075, 10, 24), surroundMat);
+    subSurround.position.set(0, 0.86, 0.73); subGrp.add(subSurround);
+    const subWooferCone = new THREE.Mesh(new THREE.CylinderGeometry(0.41, 0.15, 0.12, 22), copperConeMat);
+    subWooferCone.rotation.x = Math.PI / 2; subWooferCone.position.set(0, 0.86, 0.71); subGrp.add(subWooferCone);
+    const subDustCap = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10), surroundMat);
+    subDustCap.scale.set(1, 1, 0.55); subDustCap.position.set(0, 0.86, 0.75); subGrp.add(subDustCap);
+    box(0.92, 0.11, 0.10, surroundMat, 0, 0.26, 0.70, subGrp, null, false); // Slotted LFE low-bass port!
+    box(0.06, 0.04, 0.04, MAT.warmBulb, 0.52, 1.32, 0.73, subGrp, null, false);
+    subGrp.traverse(ch => { if (ch.isMesh) { ch.userData.propAction = "liv_sound"; if (!pickables.includes(ch)) pickables.push(ch); } });
+    mainFloorGroup.add(subGrp);
+    addCollider(1, -20.7, -13.2, -18.0, -11.7);
 
     // Sculpted Beige 3-Cushion Rolled-Arm Sofa + Plump Buffalo-Check & Cream Throw Pillows on East wall (Photo b101aaca right!)
     addSculptedSofa(mainFloorGroup, "living", -10.65, 0.24, -9.4, -Math.PI / 2, 5.8, 2.75, 3, MAT.couchBeige, [
@@ -3235,20 +3305,20 @@
       [-0.75, 0.75].forEach(dx => box(0.10, 0.08, 0.10, MAT.brass, -18.4 + dx, dy, -9.38, upperFloorGroup, null, false));
     });
     box(2.4, 1.45, 0.12, MAT.iron, -18.4, 3.78, -10.2, upperFloorGroup, "up_west");
-    // 2 White Floating Wall Shelves + White Frame + Greenery Vase on SW Wall next to Fold-Out Loveseat (Photo 7e39af74 right!)
-    [2.65, 4.05].forEach(sy => box(0.62, 0.10, 2.2, MAT.whiteAppliance, -20.02, sy, 6.2, walkUpperEnclosureGroup, null, false));
-    box(0.12, 1.25, 1.05, MAT.whiteAppliance, -20.12, 4.72, 6.0, walkUpperEnclosureGroup, null, false);
-    const shelfVase = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.36, 10), MAT.whiteAppliance);
-    shelfVase.position.set(-19.95, 4.28, 6.95); walkUpperEnclosureGroup.add(shelfVase);
+    // 2 White Floating Wall Shelves + White Frame + Greenery Vase on SW Wall next to Fold-Out Loveseat (in upperFloorGroup so visible in Plan Mode & Walk Mode!)
+    [2.45, 3.55].forEach(sy => box(0.62, 0.10, 2.2, MAT.whiteAppliance, -20.02, sy, 6.2, upperFloorGroup, "up_west", false));
+    box(0.12, 0.96, 0.88, MAT.whiteAppliance, -20.12, 4.10, 6.0, upperFloorGroup, "up_west", false);
+    const shelfVase = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.34, 10), MAT.whiteAppliance);
+    shelfVase.position.set(-19.95, 3.78, 6.95); upperFloorGroup.add(shelfVase);
     const shelfPlant = new THREE.Mesh(new THREE.DodecahedronGeometry(0.24, 0), MAT.pineNeedlesAlt);
-    shelfPlant.position.set(-19.95, 4.60, 6.95); walkUpperEnclosureGroup.add(shelfPlant);
+    shelfPlant.position.set(-19.95, 4.08, 6.95); upperFloorGroup.add(shelfPlant);
     box(1.5, 1.65, 1.5, MAT.cherryWood, -9.5, 1.32, -10.3, upperFloorGroup, "up_west");
     const wLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.48, 0.65, 12), MAT.warmBulb);
     wLamp.position.set(-9.5, 2.52, -10.3); upperFloorGroup.add(wLamp);
     addWarmHalo(-9.5, 2.55, -10.3, 2.5, upperFloorGroup, 0xffc680, 0.66);
     const nookSconce = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.34, 10), MAT.warmBulb);
-    nookSconce.position.set(-12.35, 4.55, 10.6); walkUpperEnclosureGroup.add(nookSconce); // Left-wall reading sconce in Twin Nook (7e39af74!)
-    addWarmHalo(-12.15, 4.50, 10.5, 2.2, walkUpperEnclosureGroup, 0xffcc8c, 0.56);
+    nookSconce.position.set(-12.35, 4.22, 10.6); upperFloorGroup.add(nookSconce); // Left-wall reading sconce in Twin Nook (visible in Plan & Walk!)
+    addWarmHalo(-12.15, 4.18, 10.5, 2.2, upperFloorGroup, 0xffcc8c, 0.56);
 
     // Upstairs East 2-Queen Bedroom: Distressed White & Mahogany 3-Drawer Nightstand + Lamp, Dresser, Sculpted White Loveseat + Ottoman (Photo b39ab445!)
     box(1.75, 1.85, 2.05, MAT.couchWhite, 19.3, 1.42, -1.7, upperFloorGroup, "up_east");
@@ -3867,6 +3937,7 @@
       }
       selectedRoomId = null;
       updateFocusBar();
+      if (typeof syncWalkOverlays === "function") syncWalkOverlays();
     }
 
     // ==================== 7. DUAL MODES & VIEW SWITCHING ====================
@@ -4053,6 +4124,7 @@
       camCtrl.goalPhi = cfg.cam.phi;
       camCtrl.goalRadius = cfg.cam.radius;
       camCtrl.goalTarget.set(...cfg.cam.target);
+      if (typeof syncWalkOverlays === "function") syncWalkOverlays();
     }
 
     document.querySelectorAll("[data-view]").forEach(btn => {
@@ -4256,8 +4328,10 @@
       const r = ROOMS[roomId];
       if (!r) return;
       selectedRoomId = roomId;
+      pipHiddenByUser = false;
       populateInspector(roomId);
       updateFocusBar();
+      if (typeof syncWalkOverlays === "function") syncWalkOverlays();
       if (openInspectorTab) switchTab("inspector");
 
       if (focusCam && appMode === "planning") {
@@ -4654,6 +4728,29 @@
       showToast(`📷 Matched exact real-photo angle for ${ROOMS[targetId].name}!`);
     }
 
+    function playBassPulse() {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = playChime._ctx || (playChime._ctx = new Ctx());
+        if (ctx.state === "suspended") ctx.resume();
+        [55, 82.41, 110].forEach((f, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = idx === 0 ? "sine" : "triangle";
+          osc.frequency.setValueAtTime(f * 1.12, ctx.currentTime + idx * 0.05);
+          osc.frequency.exponentialRampToValueAtTime(f, ctx.currentTime + idx * 0.05 + 0.24);
+          const t0 = ctx.currentTime + idx * 0.05;
+          gain.gain.setValueAtTime(0.001, t0);
+          gain.gain.exponentialRampToValueAtTime(idx === 0 ? 0.075 : 0.035, t0 + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.42);
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.start(t0); osc.stop(t0 + 0.45);
+        });
+      } catch (_) {}
+    }
+
+    let subBassBoost = true;
     function triggerPropAction(action) {
       if (action === "barn_door") {
         setBarnDoor(!barnDoorOpen);
@@ -4664,6 +4761,19 @@
       } else if (action === "lake_beach") {
         openLightbox("lake_beach", 0);
         showToast("5-min flat walk down Aidway Ln to Lake Cle Elum / Speelyi Beach!");
+      } else if (action === "liv_sound") {
+        subBassBoost = !subBassBoost;
+        playBassPulse();
+        if (!tvDockOpen && appMode === "planning") toggleTvDock(true);
+        else if (!wallSoundOn && appMode === "explore") {
+          wallSoundOn = true; tvUserMuted = false; wallTrack.passiveWallMute = false; wallTrack.guardMuted = true;
+          enforceSinglePlayerAudio(wallPlayer, wallPlayerReady, wallTrack, true);
+          syncTvUiLabels();
+        }
+        showToast(subBassBoost
+          ? "🔊 2.1 Towers + 12\" Bass Sub ON — playing Be Svendsen @ Mt. Nemrut!"
+          : "🔊 2.1 Sound System set to late-night gentle bass");
+        return;
       } else if (action === "camp_fire") {
         campFireOn = !campFireOn;
         flameOuter.visible = flameCore.visible = campFireOn;
@@ -4679,7 +4789,7 @@
         showToast(livFireOn ? "Turned on Living Room fireplace glow!" : "Turned off Living Room fireplace");
       } else if (action === "liv_tv") {
         toggleTvDock(true);
-        showToast("Playing Mita Gami @ Live from Home on the TV!");
+        showToast("Playing Be Svendsen live at Mount Nemrut (Cercle) on the TV!");
       } else if (action === "spa_jets") {
         spaJetsOn = !spaJetsOn;
         spaSteamGroup.visible = spaJetsOn;
@@ -4940,8 +5050,8 @@
       }
     }
 
-    // --- 3B. OFFICIAL YOUTUBE IFRAME API ENGINE ("Mita Gami @ Live from Home 2021" — Gentle 15% Volume + Auto-Mute Commercials!) ---
-    const YT_VIDEO_ID = "vh8VPeExS3c";
+    // --- 3B. OFFICIAL YOUTUBE IFRAME API ENGINE ("Be Svendsen live at Mount Nemrut, in Türkiye for Cercle" — Gentle 15% Volume + Auto-Mute Commercials!) ---
+    const YT_VIDEO_ID = "5mpafLYHVd0";
     let tvVolume = 15; // Gentle 15% cozy background level!
     let tvUserMuted = false;
     let wallSoundOn = false;
@@ -5004,7 +5114,7 @@
           trk.stalledTicks = 0;
           return { isAd: false, readyMain: dur >= 1000 };
         }
-        // Different video_id or short duration (< 600s vs Mita Gami's 3,326s) = guaranteed commercial!
+        // Different video_id or short duration (< 600s vs Be Svendsen's 7,351s set) = guaranteed commercial!
         if (vd && vd.video_id && vd.video_id !== YT_VIDEO_ID) return { isAd: true, readyMain: false };
         if (dur > 0 && dur < 600) return { isAd: true, readyMain: false };
         // Pre-roll ads report state === -1 (UNSTARTED) and dur === 0 while audio blasts! Keep muted until main 3,326s video reaches PLAYING (1)
@@ -5042,7 +5152,7 @@
           trk.guardMuted = true;
           if (isWall && !wallSoundOn) trk.passiveWallMute = true;
         } else {
-          // Confirmed real Mita Gami track playing & user wants sound: clamp perceptual volume BEFORE unmuting!
+          // Confirmed real Be Svendsen track playing & user wants sound: clamp perceptual volume BEFORE unmuting!
           if (typeof player.setVolume === "function" && Math.abs(player.getVolume() - targetYtVol) > 1) {
             player.setVolume(targetYtVol);
           }
@@ -5066,7 +5176,7 @@
       const effMute = tvUserMuted || tvVolume === 0;
       const compactMob = isTouchOrMobileUI();
       btnTvMuteTog.textContent = adActive ? "🔇 Ad" : `${effMute ? "🔇" : "🔊"} ${tvVolume}%`;
-      tvDockTitle.textContent = adActive ? "🔇 Ad Muted" : "📺 Mita Gami";
+      tvDockTitle.textContent = adActive ? "🔇 Ad Muted" : "📺 Be Svendsen";
       btnWallMute.textContent = (!wallSoundOn || effMute)
         ? (compactMob ? `🔇 TV ${tvVolume}%` : `🔇 Unmute TV (${tvVolume}%)`)
         : (adActive ? "🔇 Ad Muted" : `🔊 TV: ${tvVolume}%`);
@@ -5281,7 +5391,10 @@
     });
     document.getElementById("btn-pip-pov").addEventListener("click", e => {
       e.stopPropagation();
-      matchPhotoPOV(fpv.currentRoom || "porch");
+      const targetRoom = appMode === "explore"
+        ? (fpv.currentRoom || "porch")
+        : getActivePlanPhotoRoom();
+      matchPhotoPOV(targetRoom);
     });
     document.getElementById("btn-insp-pov").addEventListener("click", () => matchPhotoPOV(activeInspectorRoomId));
     ["btn-feast-plan", "btn-feast-walk", "btn-kids-feast"].forEach(id => {
@@ -5291,24 +5404,37 @@
       document.getElementById(id).addEventListener("click", () => setSafetyGates(!safetyGatesOn));
     });
     document.getElementById("btn-kids-foldout").addEventListener("click", () => setFoldOutOpen(!foldOutOpen));
-    pipCard.addEventListener("click", () => openLightbox(fpv.currentRoom || "porch", 0));
+    pipCard.addEventListener("click", () => {
+      const targetRoom = appMode === "explore"
+        ? (fpv.currentRoom || "porch")
+        : (selectedRoomId || activeInspectorRoomId || "dining");
+      openLightbox(targetRoom, 0);
+    });
+
+    function getActivePlanPhotoRoom() {
+      if (selectedRoomId && ROOMS[selectedRoomId]) return selectedRoomId;
+      if (currentView === "upstairs") return (activeInspectorRoomId && ROOMS[activeInspectorRoomId]?.level === 2) ? activeInspectorRoomId : "up_west";
+      if (currentView === "outside") return (activeInspectorRoomId && ROOMS[activeInspectorRoomId]?.level === 0) ? activeInspectorRoomId : "porch";
+      if (currentView === "downstairs" || currentView === "top") return (activeInspectorRoomId && ROOMS[activeInspectorRoomId]?.level === 1) ? activeInspectorRoomId : "dining";
+      return activeInspectorRoomId || "dining";
+    }
 
     function syncWalkOverlays() {
       const isWalk = appMode === "explore";
       minimapWrap.classList.toggle("hidden", !isWalk);
-      pipCard.classList.toggle("hidden", !isWalk || pipHiddenByUser);
-      if (isWalk) {
-        const r = ROOMS[fpv.currentRoom] || ROOMS.porch;
-        if (r && r.photos && r.photos.length) {
-          const src = pThumb(r.photos[0]);
-          if (pipImg.dataset.cur !== src) {
-            pipImg.dataset.cur = src;
-            pipImg.style.opacity = "0.42";
-            pipImg.onload = () => { pipImg.style.opacity = "1"; };
-            pipImg.src = src;
-          }
-          pipTitle.textContent = r.name;
+      pipCard.classList.toggle("hidden", pipHiddenByUser);
+      if (!isWalk) pipCard.classList.remove("hud-tucked");
+      const rKey = isWalk ? (fpv.currentRoom || "porch") : getActivePlanPhotoRoom();
+      const r = ROOMS[rKey] || ROOMS.porch;
+      if (r && r.photos && r.photos.length) {
+        const src = pThumb(r.photos[0]);
+        if (pipImg.dataset.cur !== src) {
+          pipImg.dataset.cur = src;
+          pipImg.style.opacity = "0.42";
+          pipImg.onload = () => { pipImg.style.opacity = "1"; };
+          pipImg.src = src;
         }
+        pipTitle.textContent = r.name;
       }
     }
 
@@ -5479,6 +5605,16 @@
       livFireLight.intensity = livFireOn ? ((nightMode ? 0.95 : 0.62) + Math.sin(t * 3.3) * 0.10) : 0;
       tvGlowLight.intensity = (nightMode ? 0.72 : 0.45) + Math.sin(t * 2.7) * 0.08;
       drawTvFrame(t);
+      // Sync cutaway stained-glass front door lites in Plan Mode vs full-height doors in Walk Mode, and animate 2.1 Subwoofer & Tower Cones!
+      const showCutGlass = !walkMainEnclosureGroup.visible;
+      for (let gi = 0; gi < planCutawayGlass.length; gi++) planCutawayGlass[gi].visible = showCutGlass;
+      const bassAmp = subBassBoost ? 0.032 : 0.012;
+      const bassWave = Math.sin(t * 7.8) * Math.max(0, Math.sin(t * 1.9));
+      subWooferCone.position.z = 0.71 + bassWave * bassAmp;
+      subDustCap.position.z = 0.75 + bassWave * bassAmp;
+      for (let ci = 0; ci < towerDriverCones.length; ci++) {
+        towerDriverCones[ci].position.z = 0.50 + bassWave * (bassAmp * 0.55);
+      }
 
       // Rising Hot Tub Steam Puffs
       if (spaJetsOn) {
