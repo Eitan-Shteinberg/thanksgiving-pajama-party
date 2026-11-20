@@ -535,6 +535,7 @@
       .guest-input { font-size: 16px; padding: 5px 7px; }
       .room-photo { height: 150px; }
       .lb-hint-text { display: none; }
+      .toast-msg { bottom: 104px; max-width: calc(100vw - 24px); text-align: center; }
     }
   </style>
 </head>
@@ -898,7 +899,7 @@
     const ROOMS = {
       dining: {
         id: "dining", name: "Dining Room", floor: "Downstairs", level: 1, pos: [14.8, 3.2, 6.8],
-        photos: ["efdc656b.jpg", "w1616h1080x0y0-fe50fe0a.jpg", "f127dde2.jpg"],
+        photos: ["w1616h1080x0y0-fe50fe0a.jpg", "efdc656b.jpg", "f127dde2.jpg"],
         desc: "Hardwood-floored dining room with table for 6–8, beaded chandelier, 2 tall curtained front windows, and river-rock fireplace centered on the East wall between two square windows.",
         kidNote: "<strong>Group Meals:</strong> Table + 3 adjacent granite peninsula stools easily seat all 7 together; high chair provided."
       },
@@ -1875,8 +1876,18 @@
     let foldOutExtGroup = null;
 
     function makePlushPillow(w, h, d, mat, x, y, z, rotX, rotZ, parent, roomId = null) {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(0.5, 14, 10), mat);
-      m.scale.set(w, h, d);
+      // Tailored pinched-seam square/lumbar cushion with crisp flat UVs (keeps buffalo-check & stripes crisp, never egg-shaped!)
+      const geo = new THREE.BoxGeometry(w, h, d, 4, 4, 2);
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const vx = pos.getX(i), vy = pos.getY(i), vz = pos.getZ(i);
+        const nx = vx / (w * 0.5 || 1), ny = vy / (h * 0.5 || 1);
+        const puff = Math.max(0, Math.cos(nx * 1.18) * Math.cos(ny * 1.18));
+        const cornerSoft = 1 - 0.08 * (nx * nx * ny * ny);
+        pos.setXYZ(i, vx * cornerSoft, vy * cornerSoft, vz * (0.38 + 0.85 * puff));
+      }
+      geo.computeVertexNormals();
+      const m = new THREE.Mesh(geo, mat);
       m.position.set(x, y, z);
       m.rotation.set(rotX, 0, rotZ);
       m.castShadow = true;
@@ -2636,7 +2647,7 @@
     chaseRoof.rotation.z = -0.45;
     roofGroup.add(chaseRoof);
     box(0.32, 0.75, 0.75, MAT.stainless, 24.22, 4.2, 5.8, mainFloorGroup, null, false); // Stainless direct-vent fireplace cap (#2!)
-    [[-21.75, -13.75], [21.75, -13.75], [-21.75, 13.75], [21.75, 13.75]].forEach(([cx, cz]) => addLogCorners(cx, cz, WALL_H, 0.6, mainFloorGroup));
+    [[-22.12, -14.12], [22.12, -14.12], [-22.12, 14.12], [22.12, 14.12]].forEach(([cx, cz]) => addLogCorners(cx, cz, WALL_H, 0.6, mainFloorGroup));
 
     // Full-Height 6.8ft Craftsman Double Front Doors w/ Stained-Glass Transoms + Slate Entry Mat (Photo fe50fe0a!)
     box(4.8, 0.04, 2.2, MAT.couchBeige, 7.0, 0.64, 12.1, mainFloorGroup, "entry", false); // Woven cream indoor entry mat on slate pad!
@@ -2925,8 +2936,8 @@
     grassBlades.position.set(15.2, 3.85, 5.8); everydayTableGroup.add(grassBlades);
     mainFloorGroup.add(everydayTableGroup);
 
-    // Full-Height Stacked-Stone Fireplace + Peeled-Log Mantel + Whimsical Stag-in-Top-Hat Portrait + Glowing SE Fairy-Light Tree!
-    const dinStoneHearth = box(1.8, 4.6, 4.6, MAT.stone, 20.6, 2.9, 5.8, mainFloorGroup, "dining");
+    // Stacked-Stone Fireplace Capped Cleanly by Peeled-Log Mantel + Whimsical Stag-in-Top-Hat Portrait Above (Photo fe50fe0a!)
+    const dinStoneHearth = box(1.8, 3.65, 4.6, MAT.stone, 20.6, 2.42, 5.8, mainFloorGroup, "dining");
     dinStoneHearth.userData.propAction = "din_fire";
     const dinFirebox = box(1.2, 1.8, 2.4, MAT.iron, 19.8, 1.6, 5.8, mainFloorGroup, "dining");
     dinFirebox.userData.propAction = "din_fire";
@@ -2935,13 +2946,16 @@
     mainFloorGroup.add(dinFlameMesh);
     box(0.32, 0.28, 1.5, MAT.pineTrunk, 19.55, 0.92, 5.8, mainFloorGroup, "dining", false);
     addWarmHalo(19.25, 1.45, 5.8, 3.0, mainFloorGroup, 0xff8a36, 0.65);
-    box(2.1, 0.32, 5.0, MAT.logBeam, 20.4, 4.1, 5.8, mainFloorGroup, "dining");
-    // Potted green boxwood topiary on left of mantel + Stag-in-Top-Hat portrait centered above mantel (Photo fe50fe0a!)
-    box(0.32, 0.36, 0.32, MAT.whiteAppliance, 20.1, 4.44, 4.05, mainFloorGroup, "dining", false);
+    box(2.15, 0.34, 5.05, MAT.logBeam, 20.4, 4.35, 5.8, mainFloorGroup, "dining");
+    // Potted green boxwood topiary on left of mantel + Stag-in-Top-Hat portrait resting cleanly above mantel!
+    box(0.32, 0.36, 0.32, MAT.whiteAppliance, 20.1, 4.68, 4.05, mainFloorGroup, "dining", false);
     const mantelPlant = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.78, 9), MAT.pineNeedlesAlt);
-    mantelPlant.position.set(20.1, 4.95, 4.05); mainFloorGroup.add(mantelPlant);
-    box(0.16, 2.55, 2.25, MAT.couchBeige, 21.28, 5.75, 5.8, walkMainEnclosureGroup, null, false);
-    box(0.20, 2.42, 2.12, MAT.stagArt, 21.24, 5.75, 5.8, walkMainEnclosureGroup, null, false);
+    mantelPlant.position.set(20.1, 5.18, 4.05); mainFloorGroup.add(mantelPlant);
+    box(0.14, 2.58, 2.26, MAT.couchBeige, 21.32, 5.82, 5.8, walkMainEnclosureGroup, null, false);
+    const stagPlane = new THREE.Mesh(new THREE.PlaneGeometry(2.14, 2.46), MAT.stagArt);
+    stagPlane.rotation.y = -Math.PI / 2;
+    stagPlane.position.set(21.23, 5.82, 5.8);
+    walkMainEnclosureGroup.add(stagPlane);
     // Glowing White Decorative Fairy-Light Tree in SE Dining Corner (X = 19.8, Z = 12.0 — Photo fe50fe0a & f127dde2!)
     const fairyTreeGrp = new THREE.Group();
     fairyTreeGrp.position.set(19.8, 0.60, 12.0);
@@ -3188,11 +3202,18 @@
     box(0.24, 6.3, 0.38, MAT.knottyPine, -8.8, 3.65, 6.0, walkUpperEnclosureGroup, null, false);
     box(0.24, 6.3, 0.38, MAT.knottyPine, -12.8, 3.65, 6.0, walkUpperEnclosureGroup, null, false);
 
-    // 45-Degree Sloped White Eave Ceilings at Upstairs Non-Dormer Corners (C1, C2, C4, C6!)
-    function addEaveSlope(w, x, z, isSouth) {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.22, 6.4), MAT.ceilingWhite);
-      m.position.set(x, 6.65, z);
-      m.rotation.x = isSouth ? 0.68 : -0.68;
+    // Solid Closed White Dormer Eave Wedges at Upstairs Non-Dormer Corners (100% sealed drywall cheek walls matching fad90698 & b39ab445!)
+    function addEaveSlope(w, x, _z, isSouth) {
+      const sh = new THREE.Shape();
+      if (isSouth) {
+        sh.moveTo(-11.66, 4.48); sh.lineTo(-11.66, 8.94); sh.lineTo(-6.75, 8.94); sh.closePath();
+      } else {
+        sh.moveTo(6.75, 8.94); sh.lineTo(11.66, 8.94); sh.lineTo(11.66, 4.48); sh.closePath();
+      }
+      const geo = new THREE.ExtrudeGeometry(sh, { depth: w, bevelEnabled: false });
+      geo.rotateY(Math.PI / 2);
+      const m = new THREE.Mesh(geo, MAT.ceilingWhite);
+      m.position.set(x - w / 2, 0, 0);
       walkUpperEnclosureGroup.add(m);
     }
     addEaveSlope(4.8, -18.2, -9.2, false); // NW sloped eave over Cherry Dresser & TV (C1 center!)
@@ -4507,6 +4528,12 @@
     const turkeyMat = new THREE.MeshStandardMaterial({ color: 0xc86b1e, roughness: 0.36 });
     const feastTurkey = new THREE.Mesh(new THREE.SphereGeometry(0.48, 14, 12), turkeyMat);
     feastTurkey.scale.set(1.05, 0.82, 1.35); feastTurkey.position.set(15.2, 3.42, 5.8); thanksgivingFeastGroup.add(feastTurkey);
+    [-0.36, 0.36].forEach(dx => {
+      const leg = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 8), turkeyMat);
+      leg.scale.set(0.75, 0.85, 1.45); leg.position.set(15.2 + dx, 3.46, 6.22); thanksgivingFeastGroup.add(leg);
+      const frill = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.04, 0.16, 8), MAT.whiteAppliance);
+      frill.rotation.x = 1.15; frill.position.set(15.2 + dx, 3.55, 6.46); thanksgivingFeastGroup.add(frill);
+    });
     // Pumpkin Pie + Whipped Cream & Pecan Pie + Cranberry Dish!
     const pieMat = new THREE.MeshStandardMaterial({ color: 0xd97324, roughness: 0.65 });
     const pecanMat = new THREE.MeshStandardMaterial({ color: 0x6b3216, roughness: 0.55 });
@@ -5201,6 +5228,12 @@
         syncTvUiLabels();
         tvWallBarEl.classList.remove("hidden");
       }
+      if (window.innerWidth <= 820) {
+        const badgeH = document.getElementById("fpv-badge").offsetHeight || 54;
+        tvWallBarEl.style.bottom = `${badgeH + 14}px`;
+      } else {
+        tvWallBarEl.style.bottom = "";
+      }
 
       const w = Math.max(1, viewport.clientWidth);
       const h = Math.max(1, viewport.clientHeight);
@@ -5270,6 +5303,8 @@
           const src = pThumb(r.photos[0]);
           if (pipImg.dataset.cur !== src) {
             pipImg.dataset.cur = src;
+            pipImg.style.opacity = "0.42";
+            pipImg.onload = () => { pipImg.style.opacity = "1"; };
             pipImg.src = src;
           }
           pipTitle.textContent = r.name;
